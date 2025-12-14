@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin panel – Ekrani</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-700">
+        <h1 class="text-xl font-bold tracking-wide">VisioCast</h1>
+        <p class="text-xs text-slate-400 mt-1">Kontrola reklama i ekrana</p>
+      </div>
+
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <!-- Reklame -->
+        <a href="index.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>📺</span>
+          <span>Reklame</span>
+        </a>
+
+        <!-- Poslovnice -->
+        <a href="pumpe.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>🏬</span>
+          <span>Poslovnice</span>
+        </a>
+
+        <!-- Ekrani (AKTIVNO) -->
+        <a href="ekrani.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800 text-sm font-medium">
+          <span>🖥️</span>
+          <span>Ekrani</span>
+        </a>
+
+        <!-- Registri -->
+        <a href="registri.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>📚</span>
+          <span>Registri</span>
+        </a>
+      </nav>
+
+      <div class="px-4 py-3 border-t border-slate-800 text-xs text-slate-400">
+        © SC – VisioCast
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Ekrani</h2>
+          <p class="text-xs text-slate-500">
+            Pregled svih ekrana po pumpama (frontend demo, bez boxova)
+          </p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span>Sve ide preko browsera – player.html</span>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <section class="flex-1 p-6 space-y-4">
+
+        <!-- STAT KARTICE -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1">
+          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Ukupno ekrana
+            </span>
+            <span id="stat-total" class="mt-1 text-xl font-semibold text-slate-900">–</span>
+          </div>
+
+          <div class="bg-white border border-emerald-100 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Aktivne kampanje
+            </span>
+            <span id="stat-active" class="mt-1 text-xl font-semibold text-emerald-600">–</span>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Bez kampanje
+            </span>
+            <span id="stat-idle" class="mt-1 text-xl font-semibold text-slate-500">–</span>
+          </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-slate-800">
+              Filteri ekrana
+            </h3>
+            <button id="btn-clear-filters"
+              class="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+              Resetuj filtere
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <!-- Pretraga -->
+            <div class="md:col-span-1">
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Pretraga (ekran / pumpa)
+              </label>
+              <div class="relative">
+                <input
+                  id="filter-search"
+                  type="text"
+                  placeholder="Npr. Ulazni ekran – Ilidža..."
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                  🔍
+                </span>
+              </div>
+            </div>
+
+            <!-- Poslovnica -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Poslovnica
+              </label>
+              <select
+                id="filter-poslovnica"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+                <option value="all">Sve poslovnice</option>
+                <!-- punimo iz JS-a -->
+              </select>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Status ekrana
+              </label>
+              <select
+                id="filter-status"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+                <option value="all">Svi</option>
+                <option value="active">Samo s kampanjom</option>
+                <option value="idle">Bez kampanje</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA EKRANA -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-800">Ekrani</h3>
+              <p class="text-xs text-slate-500">
+                Pregled po ekranima – šta se trenutno vrti na kojem ekranu
+              </p>
+            </div>
+            <div class="text-xs text-slate-500">
+              <span id="label-count">Učitavanje...</span>
+            </div>
+          </div>
+
+          <div id="screen-list" class="space-y-3">
+            <!-- kartice idu iz JS-a -->
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL – detalji ekrana -->
+  <div id="device-modal"
+       class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 relative">
+      <button
+        onclick="closeDeviceModal()"
+        class="absolute top-3 right-3 text-slate-400 hover:text-slate-700 text-sm">
+        ✕
+      </button>
+
+      <h2 id="modal-title" class="text-lg font-semibold text-slate-900 mb-1"></h2>
+      <p id="modal-subtitle" class="text-sm text-slate-500 mb-4"></p>
+
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-[11px] text-slate-500 uppercase mb-1">Status</p>
+          <div id="modal-status" class="text-xs"></div>
+        </div>
+        <div>
+          <p class="text-[11px] text-slate-500 uppercase mb-1">Aktivna reklama</p>
+          <p id="modal-reklama" class="text-xs text-slate-800"></p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-[11px] text-slate-500 uppercase mb-1">Napomena</p>
+          <p id="modal-note" class="text-xs text-slate-700">
+            Player radi preko browsera – otvoren je link sa parametrima za ovu poslovnicu.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <a id="modal-open-player"
+           href="#"
+           target="_blank"
+           class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700 text-xs">
+          Otvori ekran u novom tabu
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS LOGIKA -->
+  <script>
+    // Baza za API – isto kao na reklame stranici
+    window.API_BASE = window.API_BASE || "http://localhost:4000";
+    const API_BASE = window.API_BASE;
+
+    // Frontend koristi format:
+    // { id, naziv, poslovnicaId, poslovnicaNaziv, lokacija, status, reklamaNaziv, reklamaTip, aktivnihKampanja }
+    let screens = [];
+
+    const listEl = document.getElementById("screen-list");
+    const labelCount = document.getElementById("label-count");
+    const filterSearch = document.getElementById("filter-search");
+    const filterPoslovnica = document.getElementById("filter-poslovnica");
+    const filterStatus = document.getElementById("filter-status");
+    const btnClear = document.getElementById("btn-clear-filters");
+
+    const statTotal = document.getElementById("stat-total");
+    const statActive = document.getElementById("stat-active");
+    const statIdle = document.getElementById("stat-idle");
+
+    // Modal elementi
+    const modal = document.getElementById("device-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalSubtitle = document.getElementById("modal-subtitle");
+    const modalStatusEl = document.getElementById("modal-status");
+    const modalReklama = document.getElementById("modal-reklama");
+    const modalOpenPlayer = document.getElementById("modal-open-player");
+
+    function statusBadge(status) {
+      const base = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium";
+      if (status === "active") {
+        return `
+          <span class="${base} bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1"></span>
+            Aktivna kampanja
+          </span>
+        `;
+      }
+      return `
+        <span class="${base} bg-slate-50 text-slate-600 border border-slate-200">
+          <span class="h-1.5 w-1.5 rounded-full bg-slate-400 mr-1"></span>
+          Bez dodijeljene kampanje
+        </span>
+      `;
+    }
+
+    function reklamaInfo(screen) {
+      if (screen.status !== "active" || !screen.reklamaNaziv) {
+        return `<span class="text-xs text-slate-400">Nema dodijeljene kampanje</span>`;
+      }
+      const tip = screen.reklamaTip ? ` · ${screen.reklamaTip}` : "";
+      const extraCount =
+        screen.aktivnihKampanja && screen.aktivnihKampanja > 1
+          ? ` <span class="text-[11px] text-slate-500">(+ još ${screen.aktivnihKampanja - 1})</span>`
+          : "";
+      return `
+        <span class="text-xs font-medium text-slate-800">
+          ${screen.reklamaNaziv}<span class="text-slate-400">${tip}</span>${extraCount}
+        </span>
+      `;
+    }
+
+    function populatePoslovnicaFilter() {
+      const first = document.createElement("option");
+      first.value = "all";
+      first.textContent = "Sve poslovnice";
+
+      filterPoslovnica.innerHTML = "";
+      filterPoslovnica.appendChild(first);
+
+      const set = new Set();
+      screens.forEach(s => set.add(s.poslovnicaNaziv));
+      set.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        filterPoslovnica.appendChild(opt);
+      });
+    }
+
+    function renderList() {
+      const q = filterSearch.value.trim().toLowerCase();
+      const posVal = filterPoslovnica.value;
+      const statusVal = filterStatus.value;
+
+      let filtered = screens.filter(s => {
+        if (q) {
+          const combined = (s.naziv + " " + s.poslovnicaNaziv + " " + (s.lokacija || "")).toLowerCase();
+          if (!combined.includes(q)) return false;
+        }
+        if (posVal !== "all" && s.poslovnicaNaziv !== posVal) return false;
+        if (statusVal !== "all" && s.status !== statusVal) return false;
+        return true;
+      });
+
+      listEl.innerHTML = "";
+
+      if (!filtered.length) {
+        listEl.innerHTML = `
+          <div class="text-center text-xs text-slate-400 py-6">
+            Nema ekrana za odabrane filtere.
+          </div>
+        `;
+        labelCount.textContent = "0 ekrana";
+      } else {
+        filtered.sort((a, b) => {
+          if (a.poslovnicaNaziv === b.poslovnicaNaziv) {
+            return a.naziv.localeCompare(b.naziv, "bs", { sensitivity: "base" });
+          }
+          return a.poslovnicaNaziv.localeCompare(b.poslovnicaNaziv, "bs", { sensitivity: "base" });
+        });
+
+        filtered.forEach(s => {
+          const card = document.createElement("div");
+          card.className =
+            "bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 flex items-center justify-between gap-4 transition cursor-pointer";
+          card.onclick = () => openDeviceModal(s);
+
+          card.innerHTML = `
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-slate-900">${s.naziv}</div>
+              <div class="text-[11px] text-slate-500">
+                ${s.poslovnicaNaziv}${s.lokacija ? " • " + s.lokacija : ""}
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-2">
+                ${statusBadge(s.status)}
+                ${reklamaInfo(s)}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <a
+                href="player.html?ekranId=${encodeURIComponent(s.id)}"
+                target="_blank"
+                class="inline-flex items-center px-3 py-1 rounded-full bg-sky-600 text-white text-[11px] hover:bg-sky-700">
+                Otvori ekran
+              </a>
+              <button
+                type="button"
+                class="text-[11px] text-slate-500 hover:text-slate-700 underline decoration-dotted"
+                onclick="event.stopPropagation(); openDeviceModal(screens.find(x => x.id === '${s.id}'));">
+                Detalji
+              </button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+
+        labelCount.textContent =
+          filtered.length + (filtered.length === 1 ? " ekran" : " ekrana");
+      }
+
+      // Statistika (na osnovu svih ekrana)
+      const total = screens.length;
+      const activeCount = screens.filter(s => s.status === "active").length;
+      const idleCount = screens.filter(s => s.status !== "active").length;
+
+      statTotal.textContent = total.toString();
+      statActive.textContent = activeCount.toString();
+      statIdle.textContent = idleCount.toString();
+    }
+
+    function resetFilters() {
+      filterSearch.value = "";
+      filterPoslovnica.value = "all";
+      filterStatus.value = "all";
+      renderList();
+    }
+
+    function openDeviceModal(screen) {
+      if (!screen) return;
+      modalTitle.textContent = screen.naziv;
+      modalSubtitle.textContent =
+        screen.poslovnicaNaziv + (screen.lokacija ? " • " + screen.lokacija : "");
+      modalStatusEl.innerHTML = statusBadge(screen.status);
+
+      let modalText = "Nema dodijeljene kampanje";
+      if (screen.status === "active" && screen.reklamaNaziv) {
+        if (screen.aktivnihKampanja && screen.aktivnihKampanja > 1) {
+          modalText =
+            `${screen.reklamaNaziv} (${screen.reklamaTip || "Reklama"}) + još ${screen.aktivnihKampanja - 1} kamp.`;
+        } else {
+          modalText = `${screen.reklamaNaziv} (${screen.reklamaTip || "Reklama"})`;
+        }
+      }
+      modalReklama.textContent = modalText;
+
+      modalOpenPlayer.href =
+        "player.html?poslovnica=" + encodeURIComponent(screen.poslovnicaId);
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeDeviceModal() {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // expose za inline
+    window.openDeviceModal = openDeviceModal;
+    window.closeDeviceModal = closeDeviceModal;
+
+    async function loadScreens() {
+      try {
+        labelCount.textContent = "Učitavanje...";
+        listEl.innerHTML = `
+          <div class="text-center text-xs text-slate-400 py-6">
+            Učitavanje ekrana sa servera...
+          </div>
+        `;
+
+        // 1) Ekrani
+        const resE = await fetch(`${API_BASE}/api/ekrani`);
+        if (!resE.ok) throw new Error("Greška prilikom učitavanja ekrana");
+        const dataE = await resE.json();
+
+        // 2) Poslovnice
+        const resP = await fetch(`${API_BASE}/api/poslovnice`);
+        if (!resP.ok) throw new Error("Greška prilikom učitavanja poslovnica");
+        const poslovnice = await resP.json();
+
+        // 3) Reklame
+        const resR = await fetch(`${API_BASE}/api/reklame`);
+        if (!resR.ok) throw new Error("Greška prilikom učitavanja reklama");
+        const reklame = await resR.json();
+
+        // Mapiranje: ekran je "active" ako ima barem jednu aktivnu reklamu za svoju poslovnicu
+        screens = Array.isArray(dataE)
+          ? dataE.map(scr => {
+              const pos = poslovnice.find(p => p.id === scr.poslovnicaId);
+
+              const aktivneReklame = reklame.filter(r => {
+                const listaPoslovnica = Array.isArray(r.poslovniceIds)
+                  ? r.poslovniceIds
+                  : [];
+                const isForThis = listaPoslovnica.includes(scr.poslovnicaId);
+
+                const statusStr = String(r.status || "").toLowerCase();
+                const isActive = statusStr.includes("aktiv");
+
+                return isForThis && isActive;
+              });
+
+              const glavna = aktivneReklame[0] || null;
+              const isActive = !!glavna;
+
+              return {
+                id: scr.id,
+                naziv: scr.naziv,
+                poslovnicaId: scr.poslovnicaId,
+                poslovnicaNaziv: pos ? pos.naziv : "Nepoznata poslovnica",
+                lokacija: scr.lokacijaOpis || "",
+                status: isActive ? "active" : "idle",
+                reklamaNaziv: glavna ? glavna.naziv : null,
+                reklamaTip: glavna ? glavna.tip : null,
+                aktivnihKampanja: aktivneReklame.length
+              };
+            })
+          : [];
+
+        populatePoslovnicaFilter();
+        renderList();
+      } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `
+          <div class="text-center text-xs text-red-500 py-6">
+            Greška prilikom učitavanja ekrana. Provjerite backend.
+          </div>
+        `;
+        labelCount.textContent = "0 ekrana";
+        statTotal.textContent = "0";
+        statActive.textContent = "0";
+        statIdle.textContent = "0";
+      }
+    }
+
+    // Eventi
+    filterSearch.addEventListener("input", renderList);
+    filterPoslovnica.addEventListener("change", renderList);
+    filterStatus.addEventListener("change", renderList);
+    btnClear.addEventListener("click", resetFilters);
+
+    // Init – UČITAVANJE SA BACKENDA
+    loadScreens();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin panel – Reklame</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col">
+
+      <!-- Logo / Title -->
+      <div class="px-6 py-4 border-b border-slate-700">
+        <h1 class="text-xl font-bold tracking-wide">VisioCast</h1>
+        <p class="text-xs text-slate-400 mt-1">Kontrola reklama i ekrana</p>
+      </div>
+
+      <!-- NAVIGACIJA -->
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <!-- Reklame (AKTIVNO na ovoj stranici) -->
+        <a href="index.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800 text-sm font-medium">
+          <span>📺</span>
+          <span>Reklame</span>
+        </a>
+
+        <!-- Poslovnice -->
+        <a href="pumpe.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>🏬</span>
+          <span>Poslovnice</span>
+        </a>
+
+        <!-- Ekrani -->
+        <a href="ekrani.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>🖥️</span>
+          <span>Ekrani</span>
+        </a>
+
+        <!-- Registri -->
+        <a href="registri.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>📚</span>
+          <span>Registri</span>
+        </a>
+      </nav>
+
+      <!-- FOOTER -->
+      <div class="px-4 py-3 border-t border-slate-800 text-xs text-slate-400">
+        © SC – VisioCast
+      </div>
+    </aside>
+
+    <!-- Glavni dio -->
+    <main class="flex-1 flex flex-col">
+      <!-- Top bar -->
+      <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+        <div>
+          <h2 class="text-lg font-semibold">Reklame</h2>
+          <p class="text-xs text-slate-500">Pregled aktivnih materijala</p>
+        </div>
+        <button
+          id="toggle-form"
+          class="px-4 py-2 rounded-xl bg-slate-900 text-slate-50 text-sm font-medium shadow-sm hover:bg-slate-800">
+          + Nova reklama
+        </button>
+      </header>
+
+      <!-- Sadržaj -->
+      <section class="flex-1 p-6 space-y-4">
+
+        <!-- GORNJI DASHBOARD – STATISTIKA (dinamički) -->
+        <section class="mb-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Kartica 1: Aktivne reklame -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Aktivne reklame</p>
+              <p id="stat-aktivne-reklame" class="text-2xl font-semibold text-slate-900">0</p>
+              <p id="stat-aktivne-sub" class="text-xs text-emerald-500 mt-1">Učitavam...</p>
+            </div>
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 text-xl">
+              🎬
+            </div>
+          </div>
+
+          <!-- Kartica 2: Poslovnice -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Poslovnice</p>
+              <p id="stat-poslovnice-count" class="text-2xl font-semibold text-slate-900">0</p>
+              <p id="stat-poslovnice-sub" class="text-xs text-slate-500 mt-1">Učitavam...</p>
+            </div>
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 text-xl">
+              ⛽
+            </div>
+          </div>
+
+          <!-- Kartica 3: Ekrani -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Aktivni ekrani</p>
+              <p id="stat-ekrani-count" class="text-2xl font-semibold text-slate-900">0</p>
+              <p id="stat-ekrani-sub" class="text-xs text-slate-500 mt-1">Učitavam...</p>
+            </div>
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 text-xl">
+              📺
+            </div>
+          </div>
+        </section>
+        <!-- KRAJ DASHBOARD SEKCIJE -->
+
+        <!-- Forma za novu reklamu -->
+        <div id="form-wrapper" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hidden">
+          <h3 class="text-sm font-semibold text-slate-800 mb-3">Dodaj novu reklamu</h3>
+          <form id="reklama-form" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <!-- Naziv -->
+            <div class="flex flex-col md:col-span-2">
+              <label class="text-xs font-medium text-slate-500 mb-1">Naziv</label>
+              <input
+                type="text"
+                name="naziv"
+                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                placeholder="npr. Akcija kafa"
+                required
+              />
+            </div>
+            <!-- Tip -->
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-slate-500 mb-1">Tip</label>
+              <select
+                name="tip"
+                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                required
+              >
+                <option value="video">Video</option>
+                <option value="slika">Slika</option>
+              </select>
+            </div>
+
+            <!-- Datum od -->
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-slate-500 mb-1">Datum od</label>
+              <input
+                type="date"
+                name="datumOd"
+                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              />
+            </div>
+            <!-- Datum do -->
+            <div class="flex flex-col">
+              <label class="text-xs font-medium text-slate-500 mb-1">Datum do</label>
+              <input
+                type="date"
+                name="datumDo"
+                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              />
+            </div>
+            <!-- URL -->
+            <div class="flex flex-col md:col-span-2">
+              <label class="text-xs font-medium text-slate-500 mb-1">
+                Fajl (lokalni ili URL)
+              </label>
+              <input
+                type="text"
+                name="fajlUrl"
+                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                placeholder="/media/akcija-kafa.mp4 ili akcija-kafa.mp4 ili https://youtube.com/..."
+                required
+              />
+              <p class="text-[11px] text-slate-400 mt-1">
+                Ako upišeš samo ime fajla (npr. <b>akcija-kafa.mp4</b>), automatski će biti spremljeno kao <b>/media/akcija-kafa.mp4</b>.
+              </p>
+            </div>
+
+            <!-- Vremenski slotovi - DINAMIČKI -->
+            <div class="flex flex-col md:col-span-4">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-medium text-slate-500">Vremenski periodi (po danu)</label>
+                <button
+                  type="button"
+                  onclick="addSlot()"
+                  class="text-[11px] px-2 py-1 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+                  + Dodaj slot
+                </button>
+              </div>
+
+              <div id="slots-container" class="space-y-2 text-xs">
+                <!-- Po defaultu jedan slot -->
+                <div class="slot-row flex items-center gap-2">
+                  <span class="w-14 text-slate-500">Slot 1</span>
+                  <input
+                    type="time"
+                    class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                    data-role="from"
+                  />
+                  <span class="text-slate-400">do</span>
+                  <input
+                    type="time"
+                    class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                    data-role="to"
+                  />
+                  <button
+                    type="button"
+                    onclick="removeSlot(this)"
+                    class="ml-2 px-2 py-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200 text-[11px]">
+                    Obriši
+                  </button>
+                </div>
+              </div>
+
+              <p class="text-[11px] text-slate-400 mt-1">
+                Dodaj onoliko slotova koliko treba (npr. 09–10h, 15–16h, 22–23h).
+              </p>
+            </div>
+
+            <!-- Poslovnice -->
+            <div class="flex flex-col md:col-span-4">
+              <label class="text-xs font-medium text-slate-500 mb-1">Poslovnice</label>
+              <div id="poslovnice-list" class="flex flex-wrap gap-3 text-xs">
+                <p class="text-xs text-slate-400">Učitavam poslovnice...</p>
+              </div>
+            </div>
+
+            <!-- Ekrani – NOVO -->
+            <div class="flex flex-col md:col-span-4">
+              <label class="text-xs font-medium text-slate-500 mb-1">Ekrani</label>
+              <div id="ekrani-list" class="flex flex-wrap gap-3 text-xs">
+                <p class="text-xs text-slate-400">Učitavam ekrane...</p>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Odaberi na kojim ekranima će se prikazivati ova reklama (svaki ekran ima svog plejera).
+              </p>
+            </div>
+
+            <!-- Dugmad -->
+            <div class="flex gap-2 md:col-span-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-xl bg-slate-900 text-slate-50 text-sm font-medium shadow-sm hover:bg-slate-800 flex-1">
+                Sačuvaj
+              </button>
+              <button
+                type="button"
+                id="cancel-form"
+                class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">
+                Zatvori
+              </button>
+            </div>
+            <p id="form-message" class="text-xs text-slate-500 md:col-span-4"></p>
+          </form>
+        </div>
+
+        <!-- Tabela reklama -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-semibold text-slate-800">Lista reklama</h3>
+            </div>
+
+            <!-- FILTERI -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="text-slate-500">Prikaži:</span>
+              <div class="inline-flex rounded-full bg-slate-100 p-1">
+                <button
+                  type="button"
+                  id="filter-btn-sve"
+                  data-filter="sve"
+                  class="px-3 py-1 rounded-full bg-white text-slate-800 shadow-sm text-[11px]">
+                  Sve
+                </button>
+                <button
+                  type="button"
+                  id="filter-btn-ekran"
+                  data-filter="ekran"
+                  class="px-3 py-1 rounded-full text-slate-500 hover:text-slate-800 text-[11px]">
+                  Po ekranu
+                </button>
+                <button
+                  type="button"
+                  id="filter-btn-poslovnica"
+                  data-filter="poslovnica"
+                  class="px-3 py-1 rounded-full text-slate-500 hover:text-slate-800 text-[11px]">
+                  Po poslovnici
+                </button>
+              </div>
+
+              <select
+                id="filter-select"
+                class="hidden border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10 min-w-[160px]">
+                <option value="">Odaberi...</option>
+              </select>
+
+              <!-- Status SELECT (aktivna/pauzirana/istekla/arhivirana) -->
+              <select
+                id="status-filter"
+                class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+                <option value="sve">Sve</option>
+                <option value="aktivna">Aktivne</option>
+                <option value="pauzirana">Pauzirane</option>
+                <option value="istekla">Istekle</option>
+                <option value="arhivirana">Arhivirane</option>
+              </select>
+            </div>
+
+            <span id="status-badge"
+                  class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-500 self-start md:self-auto">
+              Učitavam podatke...
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50">
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">#</th>
+                  <th id="th-naziv"
+                      class="text-left px-3 py-2 font-medium text-slate-500 cursor-pointer">
+                    Naziv
+                  </th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Tip</th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Period</th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Slotovi</th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Poslovnice</th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Fajl</th>
+                  <th class="text-left px-3 py-2 font-medium text-slate-500">Akcije</th>
+                </tr>
+              </thead>
+              <tbody id="reklame-body" class="divide-y divide-slate-100">
+                <!-- JS ubacuje redove ovdje -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- PAGINACIJA -->
+          <div id="pagination" class="mt-3 text-xs text-slate-600"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- PREVIEW MODAL -->
+  <div id="preview-modal"
+       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-xl max-w-3xl w-[90%] p-4 relative">
+      <!-- X dugme -->
+      <button
+        type="button"
+        onclick="closePreview()"
+        class="absolute top-3 right-3 text-slate-500 hover:text-slate-800 text-xl">
+        ✕
+      </button>
+
+      <!-- Header (naziv + period) -->
+      <div id="preview-header" class="mb-3"></div>
+
+      <!-- Sadržaj (video ili slika) -->
+      <div id="preview-content" class="mt-2"></div>
+    </div>
+  </div>
+
+  <!-- EDIT REKLAMA MODAL -->
+  <div id="edit-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200]">
+    <div class="bg-white w-full max-w-xl rounded-2xl shadow-xl p-6">
+      <h2 class="text-lg font-semibold mb-4">Uredi reklamu</h2>
+
+      <div id="edit-modal-content" class="space-y-4">
+        <!-- JS će ovdje ubaciti formu -->
+        <p class="text-sm text-slate-500">
+          Učitavanje podataka o reklami...
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeEditModal()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">
+          Zatvori
+        </button>
+
+        <button onclick="sacuvajUredjenuReklamu()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+          Sačuvaj izmjene
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS LOGIKA -->
+  <script>
+    // Baza za API – backend na http://localhost:4000
+    window.API_BASE = window.API_BASE || "http://localhost:4000";
+    const API_BASE = window.API_BASE;
+
+    // helper: pretvori r.fajlUrl u punu putanju (backend /media)
+    function resolveFileUrl(rawUrl) {
+      if (!rawUrl) return "";
+      const url = rawUrl.trim();
+      if (!url) return "";
+
+      // Ako je već puni URL (YouTube, CDN, sl.)
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+
+      // Ako počinje sa / (npr. /media/akcija-kafa.mp4)
+      if (url.startsWith("/")) {
+        return API_BASE + url;
+      }
+
+      // Inače tretiramo kao ime fajla u /media
+      return API_BASE + "/media/" + url;
+    }
+
+    let slotCounter = 1;
+
+    // FILTERI (ekran / poslovnica)
+    let currentFilterType = "sve";       // "sve" | "ekran" | "poslovnica"
+    let currentFilterValue = "";
+    let filterEkraniLoaded = false;
+    let filterPoslovniceLoaded = false;
+
+    // STATUS FILTER I SORTIRANJE
+    let currentStatusFilter = "sve";     // "sve" | "aktivna" | "pauzirana" | "istekla" | "arhivirana"
+    let currentSortField = "naziv";      // zasad samo naziv
+    let currentSortDir = "asc";          // "asc" | "desc"
+
+    // PAGINACIJA
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let fullReklameList = [];
+
+    // POSLJEDNJI UČITANI PODACI (za preview / edit)
+    let lastReklame = [];
+    let reklamaKojaSeUredjuje = null;
+
+    // CACHE POSLOVNICA I EKRANA – za formu + PDF (NOVO)
+    let poslovniceCache = [];
+    let ekraniCache = [];
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "";
+      const [year, month, day] = dateStr.split("-");
+      return `${day}.${month}.${year}`;
+    }
+
+    function closePreview() {
+      const modal = document.getElementById("preview-modal");
+      const content = document.getElementById("preview-content");
+      const header = document.getElementById("preview-header");
+      if (!modal || !content || !header) return;
+
+      content.innerHTML = "";
+      header.innerHTML = "";
+      modal.classList.add("hidden");
+    }
+
+    // status čitamo samo iz r.status (backend ga postavlja)
+    function getReklamaStatus(r) {
+      const s = String(r.status || "").toLowerCase();
+
+      if (s.includes("aktiv")) return "aktivna";
+      if (s.includes("pauz")) return "pauzirana";
+      if (s.includes("istek")) return "istekla";
+      if (s.includes("zakaz")) return "zakazana";
+      if (s.includes("arhiv")) return "arhivirana";
+
+      // ako ništa ne dobijemo iz backenda, neka bude pauzirana
+      return "pauzirana";
+    }
+
+    function addSlot() {
+      slotCounter++;
+      const container = document.getElementById("slots-container");
+      if (!container) return;
+
+      const div = document.createElement("div");
+      div.className = "slot-row flex items-center gap-2";
+      div.innerHTML = `
+        <span class="w-14 text-slate-500">Slot ${slotCounter}</span>
+        <input
+          type="time"
+          class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+          data-role="from"
+        />
+        <span class="text-slate-400">do</span>
+        <input
+          type="time"
+          class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+          data-role="to"
+        />
+        <button
+          type="button"
+          onclick="removeSlot(this)"
+          class="ml-2 px-2 py-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200 text-[11px]">
+          Obriši
+        </button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeSlot(button) {
+      const row = button.closest(".slot-row");
+      if (!row) return;
+
+      const container = document.getElementById("slots-container");
+      if (container && container.children.length === 1) {
+        const from = row.querySelector('input[data-role="from"]');
+        const to = row.querySelector('input[data-role="to"]');
+        if (from) from.value = "";
+        if (to) to.value = "";
+        return;
+      }
+      row.remove();
+    }
+
+    function previewReklama(id) {
+      const reklama = lastReklame.find(r => r.id === id);
+      if (!reklama) {
+        alert(`Greška: Reklama sa ID ${id} nije pronađena.`);
+        return;
+      }
+      openPreview(reklama);
+    }
+
+    function getYouTubeId(url) {
+      try {
+        const u = new URL(url);
+
+        if (u.hostname.includes("youtu.be")) {
+          return u.pathname.slice(1);
+        }
+
+        const v = u.searchParams.get("v");
+        if (v) return v;
+
+        const parts = u.pathname.split("/");
+        const i = parts.indexOf("embed");
+        if (i !== -1 && parts[i + 1]) return parts[i + 1];
+
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function openPreview(reklama) {
+      const modal   = document.getElementById("preview-modal");
+      const content = document.getElementById("preview-content");
+      const header  = document.getElementById("preview-header");
+
+      const name  = reklama.naziv || "";
+      const from  = reklama.datumOd ? formatDate(reklama.datumOd) : "";
+      const to    = reklama.datumDo ? formatDate(reklama.datumDo) : "";
+      const tip   = (reklama.tip || "").toLowerCase();
+      const rawUrl = reklama.fajlUrl || reklama.url || "";
+      const url = resolveFileUrl(rawUrl);
+
+      const slotovi = (reklama.slotovi && reklama.slotovi.length
+                        ? reklama.slotovi
+                        : (reklama.timeSlots || []));
+      const slotsText =
+        slotovi && slotovi.length
+          ? slotovi
+              .map((s) => `${s.od || s.from || ""}-${s.do || s.to || ""}`)
+              .join(", ")
+          : "Nema definisanih slotova";
+
+      const poslovniceText =
+        reklama.poslovniceIds?.length
+          ? `${reklama.poslovniceIds.length} poslovnica`
+          : "Nema povezanih poslovnica";
+
+      header.innerHTML = `
+        <div class="flex flex-col gap-1">
+          <h2 class="text-lg font-semibold">${name}</h2>
+          <p class="text-xs text-slate-500">
+            ${from && to ? `${from} – ${to}` : "Bez vremenskog perioda"}
+          </p>
+
+          <div class="flex flex-wrap gap-2 text-[11px] text-slate-600">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100">
+              🧭 Slotovi: ${slotsText}
+            </span>
+
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100">
+              🏬 Poslovnice: ${poslovniceText}
+            </span>
+          </div>
+        </div>
+      `;
+
+      let html = "";
+
+      if (!rawUrl) {
+        html = `
+          <p class="text-sm text-red-500 mt-3">
+            Nije pronađen URL fajla za ovu reklamu.
+          </p>
+        `;
+      } else if (tip === "video") {
+        if (rawUrl.includes("youtube.com") || rawUrl.includes("youtu.be")) {
+          const id = getYouTubeId(rawUrl) || "";
+          html = `
+            <div class="w-full aspect-video mt-4">
+              <iframe
+                class="w-full h-full rounded-lg"
+                src="https://www.youtube.com/embed/${id}?autoplay=1&mute=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+          `;
+        } else {
+          html = `
+            <video class="w-full rounded-lg mt-4" controls autoplay>
+              <source src="${url}" type="video/mp4" />
+              Vaš browser ne podržava video tag.
+            </video>
+          `;
+        }
+      } else {
+        html = `
+          <div class="mt-4">
+            <img src="${url}" alt="${name}"
+                 class="w-full rounded-lg object-contain" />
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="mt-3 text-xs">
+          <a href="${url}" target="_blank" class="text-sky-600 hover:underline">
+            Otvori fajl u novom tabu
+          </a>
+        </div>
+      `;
+      content.innerHTML = html;
+      modal.classList.remove("hidden");
+    }
+
+    // -----------------------
+    // DASHBOARD STATISTIKA
+    // -----------------------
+    async function ucitajDashboardStatistiku() {
+      const elAktivne = document.getElementById("stat-aktivne-reklame");
+      const elAktivneSub = document.getElementById("stat-aktivne-sub");
+      const elPosCount = document.getElementById("stat-poslovnice-count");
+      const elPosSub = document.getElementById("stat-poslovnice-sub");
+      const elEkrCount = document.getElementById("stat-ekrani-count");
+      const elEkrSub = document.getElementById("stat-ekrani-sub");
+
+      if (!elAktivne || !elPosCount || !elEkrCount) return;
+
+      try {
+        const [reklRes, posRes, ekrRes] = await Promise.all([
+          fetch(`${API_BASE}/api/reklame`),
+          fetch(`${API_BASE}/api/poslovnice`),
+          fetch(`${API_BASE}/api/ekrani`)
+        ]);
+
+        const [reklData, posData, ekrData] = await Promise.all([
+          reklRes.json(),
+          posRes.json(),
+          ekrRes.json()
+        ]);
+
+        // Aktivne reklame
+        const aktivneCount = reklData.filter(r => {
+          const s = (r.status || "").toLowerCase();
+          return s.includes("aktiv");
+        }).length;
+
+        elAktivne.textContent = aktivneCount;
+        elAktivneSub.textContent = aktivneCount > 0
+          ? "Kampanje su aktivne"
+          : "Nema aktivnih kampanja";
+
+        // Poslovnice
+        const ukupnoPos = posData.length;
+        const onlinePos = posData.filter(p => (p.status || "").toLowerCase() === "online").length;
+        const offlinePos = ukupnoPos - onlinePos;
+
+        elPosCount.textContent = ukupnoPos;
+        elPosSub.textContent = `${onlinePos} online · ${offlinePos} offline`;
+
+        // Ekrani
+        const ukupnoEkr = ekrData.length;
+        const onlineEkr = ekrData.filter(e => (e.status || "").toLowerCase() === "online").length;
+        const offlineEkr = ukupnoEkr - onlineEkr;
+
+        elEkrCount.textContent = ukupnoEkr;
+        elEkrSub.textContent = `${onlineEkr} online · ${offlineEkr} offline`;
+      } catch (err) {
+        console.error("Greška dashboard:", err);
+        elAktivneSub.textContent = "Greška pri učitavanju";
+        elPosSub.textContent = "Greška pri učitavanju";
+        elEkrSub.textContent = "Greška pri učitavanju";
+      }
+    }
+
+    // -----------------------
+    // UČITAVANJE REKLAMA + PAGINACIJA
+    // -----------------------
+    async function ucitajReklame() {
+      const status = document.getElementById("status-badge");
+      const tbody = document.getElementById("reklame-body");
+
+      try {
+        status.textContent = "Učitavam...";
+
+        const params = new URLSearchParams();
+        if (currentFilterType === "ekran" && currentFilterValue) {
+          params.append("ekranId", currentFilterValue);
+        } else if (currentFilterType === "poslovnica" && currentFilterValue) {
+          params.append("poslovnicaId", currentFilterValue);
+        }
+
+        const url = params.toString()
+          ? `${API_BASE}/api/reklame?${params.toString()}`
+          : `${API_BASE}/api/reklame`;
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error("Greška pri čitanju API-ja");
+        }
+        const data = await res.json() || [];
+
+        lastReklame = data;
+
+        let list = data.map((r) => ({
+          ...r,
+          _status: getReklamaStatus(r),
+        }));
+
+        if (currentStatusFilter !== "sve") {
+          list = list.filter((r) => r._status === currentStatusFilter);
+        }
+
+        if (currentSortField === "naziv") {
+          const dir = currentSortDir === "asc" ? 1 : -1;
+          list.sort((a, b) =>
+            (a.naziv || "").localeCompare(b.naziv || "", "bs", { sensitivity: "base" }) * dir
+          );
+        }
+
+        fullReklameList = list;
+        currentPage = 1;
+        renderReklameTabela();
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Greška pri učitavanju";
+        tbody.innerHTML =
+          '<tr><td colspan="8" class="px-3 py-4 text-center text-red-500 text-sm">Greška pri učitavanju podataka.</td></tr>';
+        const pag = document.getElementById("pagination");
+        if (pag) pag.innerHTML = "";
+      }
+    }
+
+    function renderReklameTabela() {
+      const tbody = document.getElementById("reklame-body");
+      const status = document.getElementById("status-badge");
+      const pag = document.getElementById("pagination");
+
+      if (!tbody || !status || !pag) return;
+
+      tbody.innerHTML = "";
+
+      if (!fullReklameList || fullReklameList.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="8" class="px-3 py-4 text-center text-slate-400 text-sm">Nema reklama.</td></tr>';
+        status.textContent = "0 reklama";
+        pag.innerHTML = "";
+        return;
+      }
+
+      const total = fullReklameList.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE);
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, total);
+      const pageItems = fullReklameList.slice(start, end);
+
+      pageItems.forEach((r, idx) => {
+        const globalIndex = start + idx;
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+
+        const periodText =
+          r.datumOd && r.datumDo
+            ? `${formatDate(r.datumOd)} – ${formatDate(r.datumDo)}`
+            : "-";
+
+        const slotovi = (r.slotovi && r.slotovi.length
+                          ? r.slotovi
+                          : (r.timeSlots || []));
+        const slotsText =
+          slotovi && slotovi.length
+            ? slotovi
+                .map((s) => `${s.od || s.from || ""}-${s.do || s.to || ""}`)
+                .join(", ")
+            : "-";
+
+        const poslovniceCount =
+          r.poslovniceIds && r.poslovniceIds.length
+            ? `${r.poslovniceIds.length} poslovnica`
+            : "-";
+
+        let statusBadge = "";
+        if (r._status === "aktivna") {
+          statusBadge =
+            '<span class="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-emerald-100 text-emerald-700">Aktivna</span>';
+        } else if (r._status === "pauzirana") {
+          statusBadge =
+            '<span class="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-yellow-100 text-yellow-700">Pauzirana</span>';
+        } else if (r._status === "arhivirana") {
+          statusBadge =
+            '<span class="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-slate-200 text-slate-700">Arhivirana</span>';
+        } else {
+          statusBadge =
+            '<span class="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-slate-200 text-slate-600">Istekla</span>';
+        }
+
+        const fullFileUrl = resolveFileUrl(r.fajlUrl || "");
+
+        tr.innerHTML = `
+          <td class="px-3 py-2 text-slate-500">${globalIndex + 1}</td>
+
+          <!-- NAZIV + ikonica + status -->
+          <td class="px-3 py-2">
+            <div class="flex flex-col gap-1">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-100 text-slate-800">
+                <span class="text-lg">
+                  ${r.tip === "video" ? "🎬" : "🖼️"}
+                </span>
+                <span class="font-semibold text-[15px]">
+                  ${r.naziv}
+                </span>
+              </div>
+              ${statusBadge}
+            </div>
+          </td>
+
+          <!-- TIP -->
+          <td class="px-3 py-2">
+            <span class="inline-flex items-center px-2 py-1 text-xs rounded-full
+              ${r.tip === "video"
+                ? "bg-emerald-50 text-emerald-600"
+                : "bg-sky-50 text-sky-600"}">
+              ${r.tip === "video" ? "🎞 Video" : "🖼 Slika"}
+            </span>
+          </td>
+
+          <td class="px-3 py-2 text-slate-600">${periodText}</td>
+          <td class="px-3 py-2 text-slate-600">${slotsText}</td>
+          <td class="px-3 py-2 text-slate-600">${poslovniceCount}</td>
+
+          <td class="px-3 py-2 text-slate-500 max-w-xs truncate">
+            ${r.fajlUrl
+              ? `<a href="${fullFileUrl}" target="_blank" class="text-sky-600 hover:underline text-xs">
+                  ${r.fajlUrl}
+                 </a>`
+              : `<span class="text-slate-400 text-xs">-</span>`
+            }
+          </td>
+
+          <td class="px-3 py-2">
+            <div class="flex flex-wrap gap-1">
+              <button
+                class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                onclick="previewReklama('${r.id}')">
+                Pregled
+              </button>
+
+              <button
+                class="text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100"
+                onclick="urediReklamu('${r.id}')">
+                Uredi
+              </button>
+
+              <button
+                class="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                onclick="aktivirajReklamu('${r.id}')">
+                Aktiviraj
+              </button>
+              <button
+                class="text-xs px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 hover:bg-yellow-100"
+                onclick="pauzirajReklamu('${r.id}')">
+                Pauziraj
+              </button>
+              <button
+                class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                onclick="arhivirajReklamu('${r.id}')">
+                Arhiviraj
+              </button>
+              <button
+                onclick="openCampaignReport('${r.id}')"
+                class="text-xs px-3 py-1 rounded-full border border-slate-200 hover:bg-slate-50">
+                Export (PDF)
+              </button>
+              <button
+                class="text-xs px-3 py-1 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                onclick="obrisiReklamu('${r.id}')">
+                Obriši
+              </button>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      status.textContent = `${total} reklama · strana ${currentPage}/${totalPages}`;
+
+      const prevDisabled = currentPage === 1;
+      const nextDisabled = currentPage === totalPages;
+
+      pag.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div>
+            Prikazano ${start + 1}–${end} od ${total}
+          </div>
+          <div class="inline-flex items-center gap-2">
+            <button
+              onclick="idiNaPrethodnuStranicu()"
+              class="px-3 py-1 rounded-full border border-slate-200 text-xs ${prevDisabled ? "text-slate-300 cursor-not-allowed" : "hover:bg-slate-50"}"
+              ${prevDisabled ? "disabled" : ""}
+            >
+              ‹ Prethodna
+            </button>
+            <span>Strana ${currentPage}/${totalPages}</span>
+            <button
+              onclick="idiNaSljedecuStranicu()"
+              class="px-3 py-1 rounded-full border border-slate-200 text-xs ${nextDisabled ? "text-slate-300 cursor-not-allowed" : "hover:bg-slate-50"}"
+              ${nextDisabled ? "disabled" : ""}
+            >
+              Sljedeća ›
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function idiNaPrethodnuStranicu() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderReklameTabela();
+      }
+    }
+
+    function idiNaSljedecuStranicu() {
+      const totalPages = Math.ceil((fullReklameList?.length || 0) / PAGE_SIZE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderReklameTabela();
+      }
+    }
+
+    // -----------------------
+    // CRUD AKCIJE
+    // -----------------------
+    async function obrisiReklamu(id) {
+      if (!confirm("Da li sigurno želiš obrisati ovu reklamu?")) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/reklame/${id}`, {
+          method: "DELETE"
+        });
+
+        if (!res.ok) {
+          throw new Error("Greška pri brisanju");
+        }
+
+        await ucitajReklame();
+        await ucitajDashboardStatistiku();
+      } catch (err) {
+        console.error(err);
+        alert("Greška pri brisanju reklame.");
+      }
+    }
+
+    async function aktivirajReklamu(id) {
+      try {
+        const res = await fetch(`${API_BASE}/api/reklame/${id}/aktiviraj`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ exclusive: true })
+        });
+        if (!res.ok) {
+          throw new Error("Greška pri aktiviranju");
+        }
+        await ucitajReklame();
+        await ucitajDashboardStatistiku();
+      } catch (err) {
+        console.error(err);
+        alert("Greška pri aktiviranju reklame.");
+      }
+    }
+
+    async function pauzirajReklamu(id) {
+      try {
+        const res = await fetch(`${API_BASE}/api/reklame/${id}/pauziraj`, {
+          method: "POST"
+        });
+        if (!res.ok) {
+          throw new Error("Greška pri pauziranju");
+        }
+        await ucitajReklame();
+        await ucitajDashboardStatistiku();
+      } catch (err) {
+        console.error(err);
+        alert("Greška pri pauziranju reklame.");
+      }
+    }
+
+    // ARHIVIRAJ – NOVO
+    async function arhivirajReklamu(id) {
+      if (!confirm("Arhivirati ovu reklamu/kampanju?")) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/reklame/${id}/arhiviraj`, {
+          method: "POST"
+        });
+        if (!res.ok) {
+          throw new Error("Greška pri arhiviranju");
+        }
+        await ucitajReklame();
+        await ucitajDashboardStatistiku();
+      } catch (err) {
+        console.error(err);
+        alert("Greška pri arhiviranju reklame.");
+      }
+    }
+
+    async function ucitajPoslovniceZaFormu() {
+      const container = document.getElementById("poslovnice-list");
+      if (!container) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/poslovnice`);
+        if (!res.ok) throw new Error("API greška");
+
+        const data = await res.json();
+        poslovniceCache = data; // NOVO: čuvamo za PDF
+
+        container.innerHTML = "";
+
+        data.forEach((p) => {
+          const label = document.createElement("label");
+          label.className =
+            "inline-flex items-center gap-2 text-xs text-slate-700 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200";
+          label.innerHTML = `
+            <input type="checkbox" name="poslovnice" value="${p.id}"
+              class="rounded border-slate-300 text-slate-900 focus:ring-slate-900/20" />
+            <span>${p.naziv || p.id}</span>
+          `;
+          container.appendChild(label);
+        });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML =
+          '<p class="text-xs text-red-500">Greška pri učitavanju poslovnica.</p>';
+      }
+    }
+
+    // Učitavanje ekrana za formu – NOVO
+    async function ucitajEkraneZaFormu() {
+      const container = document.getElementById("ekrani-list");
+      if (!container) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/ekrani`);
+        if (!res.ok) throw new Error("API greška");
+
+        const data = await res.json();
+        ekraniCache = data; // čuvamo za PDF
+
+        container.innerHTML = "";
+
+        data.forEach((e) => {
+          const label = document.createElement("label");
+          label.className =
+            "inline-flex items-center gap-2 text-xs text-slate-700 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200";
+          label.innerHTML = `
+            <input type="checkbox" name="ekrani" value="${e.id}"
+              class="rounded border-slate-300 text-slate-900 focus:ring-slate-900/20" />
+            <span>${e.naziv || e.id}</span>
+          `;
+          container.appendChild(label);
+        });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML =
+          '<p class="text-xs text-red-500">Greška pri učitavanju ekrana.</p>';
+      }
+    }
+
+    function setFilterActiveButton(type) {
+      const btnSve = document.getElementById("filter-btn-sve");
+      const btnEkran = document.getElementById("filter-btn-ekran");
+      const btnPoslovnica = document.getElementById("filter-btn-poslovnica");
+
+      const all = [btnSve, btnEkran, btnPoslovnica];
+      all.forEach((btn) => {
+        if (!btn) return;
+        btn.classList.remove("bg-white", "text-slate-800", "shadow-sm");
+        btn.classList.add("text-slate-500");
+      });
+
+      let activeBtn = null;
+      if (type === "sve") activeBtn = btnSve;
+      if (type === "ekran") activeBtn = btnEkran;
+      if (type === "poslovnica") activeBtn = btnPoslovnica;
+
+      if (activeBtn) {
+        activeBtn.classList.remove("text-slate-500");
+        activeBtn.classList.add("bg-white", "text-slate-800", "shadow-sm");
+      }
+    }
+
+    async function ucitajEkraneZaFilter() {
+      const select = document.getElementById("filter-select");
+      if (!select) return;
+      if (filterEkraniLoaded) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/ekrani`);
+        if (!res.ok) throw new Error("API greška");
+        const data = await res.json();
+
+        select.innerHTML = '<option value="">Odaberi ekran...</option>';
+        data.forEach((e) => {
+          const opt = document.createElement("option");
+          opt.value = e.id;
+          opt.textContent = e.naziv || `Ekran ${e.id}`;
+          select.appendChild(opt);
+        });
+
+        filterEkraniLoaded = true;
+      } catch (err) {
+        console.error(err);
+        select.innerHTML =
+          '<option value="">Greška pri učitavanju ekrana</option>';
+      }
+    }
+
+    async function ucitajPoslovniceZaFilterDropdown() {
+      const select = document.getElementById("filter-select");
+      if (!select) return;
+      if (filterPoslovniceLoaded) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/poslovnice`);
+        if (!res.ok) throw new Error("API greška");
+        const data = await res.json();
+
+        select.innerHTML = '<option value="">Odaberi poslovnicu...</option>';
+        data.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.naziv;
+          select.appendChild(opt);
+        });
+
+        filterPoslovniceLoaded = true;
+      } catch (err) {
+        console.error(err);
+        select.innerHTML =
+          '<option value="">Greška pri učitavanju poslovnica</option>';
+      }
+    }
+
+    function initFilteri() {
+      const btnSve = document.getElementById("filter-btn-sve");
+      const btnEkran = document.getElementById("filter-btn-ekran");
+      const btnPoslovnica = document.getElementById("filter-btn-poslovnica");
+      const select = document.getElementById("filter-select");
+      const statusSelect = document.getElementById("status-filter");
+
+      if (!btnSve || !btnEkran || !btnPoslovnica || !select || !statusSelect) return;
+
+      setFilterActiveButton("sve");
+      select.classList.add("hidden");
+      currentFilterType = "sve";
+      currentFilterValue = "";
+
+      btnSve.addEventListener("click", () => {
+        currentFilterType = "sve";
+        currentFilterValue = "";
+        select.classList.add("hidden");
+        setFilterActiveButton("sve");
+        ucitajReklame();
+      });
+
+      btnEkran.addEventListener("click", async () => {
+        currentFilterType = "ekran";
+        currentFilterValue = "";
+        select.classList.remove("hidden");
+        setFilterActiveButton("ekran");
+        select.innerHTML = '<option value="">Odaberi ekran...</option>';
+        await ucitajEkraneZaFilter();
+      });
+
+      btnPoslovnica.addEventListener("click", async () => {
+        currentFilterType = "poslovnica";
+        currentFilterValue = "";
+        select.classList.remove("hidden");
+        setFilterActiveButton("poslovnica");
+        select.innerHTML = '<option value="">Odaberi poslovnicu...</option>';
+        await ucitajPoslovniceZaFilterDropdown();
+      });
+
+      select.addEventListener("change", () => {
+        currentFilterValue = select.value;
+        ucitajReklame();
+      });
+
+      statusSelect.value = "sve";
+      statusSelect.addEventListener("change", () => {
+        currentStatusFilter = statusSelect.value;
+        ucitajReklame();
+      });
+    }
+
+    function initSorting() {
+      const thNaziv = document.getElementById("th-naziv");
+      if (!thNaziv) return;
+
+      thNaziv.addEventListener("click", () => {
+        if (currentSortField === "naziv") {
+          currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+        } else {
+          currentSortField = "naziv";
+          currentSortDir = "asc";
+        }
+        ucitajReklame();
+      });
+    }
+
+    // -----------------------
+    // PROVJERA KOLIZIJE SLOTOVA
+    // -----------------------
+    async function postojeKolizijeZaNovuReklamu(payload) {
+      try {
+        const res = await fetch(`${API_BASE}/api/reklame`);
+        if (!res.ok) return null; // ne možemo provjeriti, nastavi
+
+        const existing = await res.json();
+        const novePoslovnice = payload.poslovniceIds || [];
+        const noviSlotovi = payload.slotovi || [];
+        if (!novePoslovnice.length || !noviSlotovi.length) return false;
+
+        function dateRangesOverlap(aOd, aDo, bOd, bDo) {
+          if (!aOd || !aDo || !bOd || !bDo) return true; // ako ne znamo – tolerantno
+          return !(aDo < bOd || bDo < aOd);
+        }
+
+        function timeOverlap(aFrom, aTo, bFrom, bTo) {
+          if (!aFrom || !aTo || !bFrom || !bTo) return false;
+          return aFrom < bTo && bFrom < aTo;
+        }
+
+        for (const r of existing) {
+          if (r.pauzirana) continue;
+          if (!Array.isArray(r.poslovniceIds) || !Array.isArray(r.slotovi)) continue;
+
+          const sharesPoslovnica = r.poslovniceIds.some(id =>
+            novePoslovnice.includes(id)
+          );
+          if (!sharesPoslovnica) continue;
+
+          if (!dateRangesOverlap(payload.datumOd, payload.datumDo, r.datumOd, r.datumDo)) {
+            continue;
+          }
+
+          for (const ns of noviSlotovi) {
+            for (const es of r.slotovi) {
+              const nFrom = ns.od || ns.from;
+              const nTo   = ns.do || ns.to;
+              const eFrom = es.od || es.from;
+              const eTo   = es.do || es.to;
+
+              if (timeOverlap(nFrom, nTo, eFrom, eTo)) {
+                return {
+                  konfliktReklama: r,
+                  slot: { nFrom, nTo, eFrom, eTo }
+                };
+              }
+            }
+          }
+        }
+
+        return false;
+      } catch (err) {
+        console.error("Greška pri provjeri kolizije:", err);
+        return null;
+      }
+    }
+
+    function initForm() {
+      const toggleBtn = document.getElementById("toggle-form");
+      const cancelBtn = document.getElementById("cancel-form");
+      const wrapper = document.getElementById("form-wrapper");
+      const form = document.getElementById("reklama-form");
+      const msg = document.getElementById("form-message");
+
+      function showForm() {
+        wrapper.classList.remove("hidden");
+      }
+      function hideForm() {
+        wrapper.classList.add("hidden");
+        form.reset();
+        msg.textContent = "";
+        msg.classList.remove("text-red-500");
+        msg.classList.add("text-slate-500");
+
+        const container = document.getElementById("slots-container");
+        if (container) {
+          container.innerHTML = `
+            <div class="slot-row flex items-center gap-2">
+              <span class="w-14 text-slate-500">Slot 1</span>
+              <input
+                type="time"
+                class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                data-role="from"
+              />
+              <span class="text-slate-400">do</span>
+              <input
+                type="time"
+                class="border border-slate-300 rounded-xl px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                data-role="to"
+              />
+              <button
+                type="button"
+                onclick="removeSlot(this)"
+                class="ml-2 px-2 py-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200 text-[11px]">
+                Obriši
+              </button>
+            </div>
+          `;
+          slotCounter = 1;
+        }
+
+        // odčekiraj sve checkboxe za poslovnice / ekrane
+        document
+          .querySelectorAll('input[name="poslovnice"], input[name="ekrani"]')
+          .forEach((el) => (el.checked = false));
+      }
+
+      toggleBtn.addEventListener("click", showForm);
+      cancelBtn.addEventListener("click", hideForm);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msg.textContent = "Spremam...";
+        msg.classList.remove("text-red-500");
+        msg.classList.add("text-slate-500");
+        const formData = new FormData(form);
+
+        const timeSlots = [];
+        document
+          .querySelectorAll("#slots-container .slot-row")
+          .forEach((row) => {
+            const fromInput = row.querySelector('input[data-role="from"]');
+            const toInput = row.querySelector('input[data-role="to"]');
+            const from = fromInput?.value || "";
+            const to = toInput?.value || "";
+            if (from && to) {
+              timeSlots.push({ from, to });
+            }
+          });
+
+        const poslovniceIds = [];
+        document
+          .querySelectorAll('input[name="poslovnice"]:checked')
+          .forEach((el) => poslovniceIds.push(el.value));
+
+        const ekraniIds = [];
+        document
+          .querySelectorAll('input[name="ekrani"]:checked')
+          .forEach((el) => ekraniIds.push(el.value));
+
+        // normalizacija fajl URL-a za backend:
+        // - ako počinje sa http -> ostavi
+        // - ako počinje sa / -> ostavi (npr. /media/akcija-kafa.mp4)
+        // - inače dodaj /media/ ispred
+        const rawUrl = (formData.get("fajlUrl") || "").toString().trim();
+        let fajlUrl = rawUrl;
+        if (rawUrl && !rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+          if (!rawUrl.startsWith("/")) {
+            fajlUrl = "/media/" + rawUrl;
+          } else {
+            fajlUrl = rawUrl;
+          }
+        }
+
+        const payload = {
+          naziv: formData.get("naziv"),
+          tip: formData.get("tip"),
+          trajanjeSekundi: 0, // više se ne oslanjamo na trajanje
+          fajlUrl,
+          datumOd: formData.get("datumOd") || null,
+          datumDo: formData.get("datumDo") || null,
+          slotovi: timeSlots.map((s) => ({ od: s.from, do: s.to })),
+          poslovniceIds,
+          ekraniIds, // NOVO
+        };
+
+        // provjera kolizija slotova
+        const konflikt = await postojeKolizijeZaNovuReklamu(payload);
+        if (konflikt) {
+          if (konflikt !== null) {
+            msg.textContent = `Novi slot se preklapa sa reklamom "${konflikt.konfliktReklama.naziv}". Promijeni vrijeme ili poslovnice.`;
+            msg.classList.remove("text-slate-500");
+            msg.classList.add("text-red-500");
+            return;
+          }
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/reklame`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            throw new Error("Greška pri spremanju");
+          }
+
+          await res.json();
+          msg.textContent = "Spašeno ✅";
+          await ucitajReklame();
+          await ucitajDashboardStatistiku();
+          setTimeout(hideForm, 700);
+        } catch (err) {
+          console.error(err);
+          msg.textContent = "Greška pri spremanju ❌";
+          msg.classList.remove("text-slate-500");
+          msg.classList.add("text-red-500");
+        }
+      });
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById("edit-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+      }
+      reklamaKojaSeUredjuje = null;
+    }
+
+    function urediReklamu(id) {
+      const r = lastReklame.find((x) => x.id === id);
+
+      if (!r) {
+        alert("Reklama nije pronađena.");
+        return;
+      }
+
+      reklamaKojaSeUredjuje = r;
+
+      const modal = document.getElementById("edit-modal");
+      const content = document.getElementById("edit-modal-content");
+
+      const rawSlots =
+        (r.slotovi && r.slotovi.length
+          ? r.slotovi
+          : (r.timeSlots && r.timeSlots.length
+              ? r.timeSlots
+              : [{ from: "", to: "" }]));
+
+      const slots = rawSlots.map((s) => ({
+        from: s.from || s.od || "",
+        to: s.to || s.do || ""
+      }));
+
+      const slotsRows = slots
+        .map(
+          (s) => `
+          <div class="flex items-center gap-2 slot-row">
+            <input
+              type="time"
+              data-role="from"
+              class="flex-1 border rounded-lg px-2 py-1 text-sm bg-slate-50 focus:bg-white"
+              value="${s.from || ""}"
+            >
+            <span class="text-xs text-slate-500">do</span>
+            <input
+              type="time"
+              data-role="to"
+              class="flex-1 border rounded-lg px-2 py-1 text-sm bg-slate-50 focus:bg-white"
+              value="${s.to || ""}"
+            >
+            <button
+              type="button"
+              onclick="removeEditSlotRow(this)"
+              class="px-2 py-1 text-xs rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+            >
+              ✕
+            </button>
+          </div>
+        `
+        )
+        .join("");
+
+      const poslovniceText =
+        r.poslovniceIds && r.poslovniceIds.length
+          ? r.poslovniceIds.join(", ")
+          : "";
+
+      const ekraniText =
+        r.ekraniIds && r.ekraniIds.length
+          ? r.ekraniIds.join(", ")
+          : "";
+
+      content.innerHTML = `
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- OSNOVNO -->
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium">Naziv reklame</label>
+              <input 
+                id="edit-naziv"
+                class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white"
+                value="${r.naziv || ""}"
+              >
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Tip</label>
+              <select
+                id="edit-tip"
+                class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white text-sm"
+              >
+                <option value="video" ${r.tip === "video" ? "selected" : ""}>Video</option>
+                <option value="slika" ${r.tip === "slika" ? "selected" : ""}>Slika</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Fajl (lokalni ili URL)</label>
+              <input 
+                id="edit-url"
+                class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white"
+                value="${r.fajlUrl || r.url || ""}"
+              >
+              <p class="mt-1 text-[11px] text-slate-500">
+                Ako uneseš samo ime fajla (npr. akcija-kafa.mp4), biće spremljeno kao /media/akcija-kafa.mp4.
+              </p>
+            </div>
+          </div>
+
+          <!-- VRIJEME / SLOTOVI / POSLOVNICE / EKRANI -->
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm font-medium">Datum OD</label>
+                <input 
+                  id="edit-datum-od"
+                  type="date"
+                  class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white"
+                  value="${r.datumOd || ""}"
+                >
+              </div>
+              <div>
+                <label class="text-sm font-medium">Datum DO</label>
+                <input 
+                  id="edit-datum-do"
+                  type="date"
+                  class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white"
+                  value="${r.datumDo || ""}"
+                >
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-sm font-medium">Vremenski slotovi</label>
+                <button
+                  type="button"
+                  onclick="addEditSlotRow()"
+                  class="text-xs px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200"
+                >
+                  + Dodaj slot
+                </button>
+              </div>
+              <div id="edit-slots-container" class="space-y-2">
+                ${slotsRows}
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500">
+                Npr. 09:00–10:00, 15:00–16:00
+              </p>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Poslovnice (ID-evi, odvojeni zarezom)</label>
+              <textarea
+                id="edit-poslovnice"
+                rows="2"
+                class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white text-sm"
+              >${poslovniceText}</textarea>
+              <p class="mt-1 text-[11px] text-slate-500">
+                Npr: bp-ilidza, bp-doboj-jug
+              </p>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Ekrani (ID-evi, odvojeni zarezom)</label>
+              <textarea
+                id="edit-ekrani"
+                rows="2"
+                class="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 focus:bg-white text-sm"
+              >${ekraniText}</textarea>
+              <p class="mt-1 text-[11px] text-slate-500">
+                Npr: ekran-ulaz, ekran-kasa-1
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove("hidden");
+    }
+
+    function addEditSlotRow() {
+      const container = document.getElementById("edit-slots-container");
+      if (!container) return;
+
+      const div = document.createElement("div");
+      div.className = "flex items-center gap-2 slot-row";
+      div.innerHTML = `
+        <input
+          type="time"
+          data-role="from"
+          class="flex-1 border rounded-lg px-2 py-1 text-sm bg-slate-50 focus:bg-white"
+        >
+        <span class="text-xs text-slate-500">do</span>
+        <input
+          type="time"
+          data-role="to"
+          class="flex-1 border rounded-lg px-2 py-1 text-sm bg-slate-50 focus:bg-white"
+        >
+        <button
+          type="button"
+          onclick="removeEditSlotRow(this)"
+          class="px-2 py-1 text-xs rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+        >
+          ✕
+        </button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeEditSlotRow(button) {
+      const row = button.closest(".slot-row");
+      if (!row) return;
+
+      const container = document.getElementById("edit-slots-container");
+      if (!container) {
+        row.remove();
+        return;
+      }
+
+      if (container.querySelectorAll(".slot-row").length === 1) {
+        const from = row.querySelector('input[data-role="from"]');
+        const to = row.querySelector('input[data-role="to"]');
+        if (from) from.value = "";
+        if (to) to.value = "";
+        return;
+      }
+
+      row.remove();
+    }
+
+    async function sacuvajUredjenuReklamu() {
+      if (!reklamaKojaSeUredjuje) return;
+
+      const naziv = document.getElementById("edit-naziv").value.trim();
+      const tip = document.getElementById("edit-tip").value;
+      const rawUrl = document.getElementById("edit-url").value.trim();
+      const datumOd = document.getElementById("edit-datum-od").value || null;
+      const datumDo = document.getElementById("edit-datum-do").value || null;
+
+      // ista normalizacija kao kod dodavanja
+      let fajlUrl = rawUrl;
+      if (rawUrl && !rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+        if (!rawUrl.startsWith("/")) {
+          fajlUrl = "/media/" + rawUrl;
+        } else {
+          fajlUrl = rawUrl;
+        }
+      }
+
+      const slotsContainer = document.getElementById("edit-slots-container");
+      const timeSlots = [];
+
+      if (slotsContainer) {
+        const rows = slotsContainer.querySelectorAll(".slot-row");
+        rows.forEach((row) => {
+          const fromInput = row.querySelector('input[data-role="from"]');
+          const toInput = row.querySelector('input[data-role="to"]');
+          if (!fromInput || !toInput) return;
+
+          const from = fromInput.value;
+          const to = toInput.value;
+
+          if (from && to) {
+            timeSlots.push({ from, to });
+          }
+        });
+      }
+
+      const posRaw = document.getElementById("edit-poslovnice").value || "";
+      const poslovniceIds = posRaw
+        .split(",")
+        .map((x) => x.trim())
+        .filter((x) => x !== "");
+
+      const ekrRaw = document.getElementById("edit-ekrani").value || "";
+      const ekraniIds = ekrRaw
+        .split(",")
+        .map((x) => x.trim())
+        .filter((x) => x !== "");
+
+      const updated = {
+        ...reklamaKojaSeUredjuje,
+        naziv,
+        tip,
+        fajlUrl,
+        datumOd,
+        datumDo,
+        slotovi: timeSlots.map((s) => ({ od: s.from, do: s.to })),
+        poslovniceIds,
+        ekraniIds,
+      };
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/reklame/${reklamaKojaSeUredjuje.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updated),
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("Greška pri spremanju izmjena");
+        }
+
+        await ucitajReklame();
+        await ucitajDashboardStatistiku();
+        closeEditModal();
+      } catch (err) {
+        console.error(err);
+        alert("Greška pri spremanju izmjena reklame.");
+      }
+    }
+
+    // Export jedne kampanje u "PDF" (print stranica) – NOVO
+    function openCampaignReport(reklamaId) {
+      const r = lastReklame.find((x) => x.id === reklamaId);
+      if (!r) {
+        alert("Reklama nije pronađena.");
+        return;
+      }
+
+      const w = window.open("", "_blank");
+      if (!w) {
+        alert("Dozvoli pop-up prozor u pretraživaču.");
+        return;
+      }
+
+      const periodText =
+        r.datumOd && r.datumDo ? `${formatDate(r.datumOd)} – ${formatDate(r.datumDo)}` : "Bez perioda";
+
+      const slotovi = (r.slotovi && r.slotovi.length
+                        ? r.slotovi
+                        : (r.timeSlots || []));
+      const slotsText =
+        slotovi && slotovi.length
+          ? slotovi
+              .map((s) => `${s.od || s.from || ""} – ${s.do || s.to || ""}`)
+              .join(", ")
+          : "-";
+
+      // Poslovnice detalji iz cache-a
+      const poslovniceIds = r.poslovniceIds || [];
+      const poslovniceDetalji = poslovniceIds.map((id) => {
+        const p = poslovniceCache.find((x) => x.id === id) || {};
+        return {
+          id,
+          naziv: p.naziv || id,
+          grad: p.grad || "",
+          // pokušaj naći naziv klijenta/komitenta ako postoji
+          komitent: p.komitentNaziv || p.klijent || p.komitent || "",
+        };
+      });
+
+      // Izvuci unikatne nazive klijenata
+      const klijentiSet = new Set();
+      poslovniceDetalji.forEach((p) => {
+        if (p.komitent) klijentiSet.add(p.komitent);
+      });
+      const klijenti = Array.from(klijentiSet);
+      const klijentText = klijenti.length
+        ? klijenti.join(", ")
+        : "Prema odabranim poslovnicama";
+
+      // Ekrani detalji
+      const ekraniIds = r.ekraniIds || [];
+      const ekraniDetalji = ekraniIds.map((id) => {
+        const e = ekraniCache.find((x) => x.id === id) || {};
+        return {
+          id,
+          naziv: e.naziv || id,
+          tip: e.tip || "",
+        };
+      });
+
+      let htmlPoslovniceRows = "";
+      poslovniceDetalji.forEach((p, idx) => {
+        htmlPoslovniceRows += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${p.naziv}</td>
+            <td>${p.grad || "-"}</td>
+            <td>${p.komitent || "-"}</td>
+          </tr>
+        `;
+      });
+
+      if (!htmlPoslovniceRows) {
+        htmlPoslovniceRows = `
+          <tr>
+            <td colspan="4">Nema odabranih poslovnica.</td>
+          </tr>
+        `;
+      }
+
+      let htmlEkraniRows = "";
+      ekraniDetalji.forEach((e, idx) => {
+        htmlEkraniRows += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${e.naziv}</td>
+            <td>${e.tip || "-"}</td>
+          </tr>
+        `;
+      });
+      if (!htmlEkraniRows) {
+        htmlEkraniRows = `
+          <tr>
+            <td colspan="3">Nema eksplicitno odabranih ekrana.</td>
+          </tr>
+        `;
+      }
+
+      const statusTekst = getReklamaStatus(r);
+
+      let html = `
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>Izvještaj kampanje</title>
+          <style>
+            body { font-family: system-ui, sans-serif; font-size: 12px; color: #111827; }
+            h1 { font-size: 18px; margin-bottom: 4px; }
+            h2 { font-size: 14px; margin-top: 16px; margin-bottom: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            th, td { border: 1px solid #ddd; padding: 4px 6px; }
+            th { background: #f3f4f6; text-align: left; }
+            .meta { margin-bottom: 12px; }
+            .meta p { margin: 2px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>Izvještaj kampanje</h1>
+
+          <div class="meta">
+            <p><strong>Naziv kampanje:</strong> ${r.naziv || ""}</p>
+            <p><strong>Tip:</strong> ${r.tip || ""}</p>
+            <p><strong>Status:</strong> ${statusTekst}</p>
+            <p><strong>Klijent:</strong> ${klijentText}</p>
+            <p><strong>Period emitovanja:</strong> ${periodText}</p>
+            <p><strong>Vremenski slotovi:</strong> ${slotsText}</p>
+            <p><strong>Broj poslovnica:</strong> ${poslovniceIds.length || 0}</p>
+            <p><strong>Broj ekrana:</strong> ${ekraniIds.length || 0}</p>
+          </div>
+
+          <h2>Poslovnice obuhvaćene kampanjom</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Naziv poslovnice</th>
+                <th>Grad</th>
+                <th>Klijent / Komitent</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${htmlPoslovniceRows}
+            </tbody>
+          </table>
+
+          <h2>Ekrani na kojima se prikazuje kampanja</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Naziv ekrana</th>
+                <th>Tip</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${htmlEkraniRows}
+            </tbody>
+          </table>
+
+          <p style="margin-top:24px;font-size:10px;color:#6b7280;">
+            Generisano iz VisioCast sistema.
+          </p>
+
+          <script>
+            window.print();
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      w.document.write(html);
+      w.document.close();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      ucitajDashboardStatistiku();
+      ucitajReklame();
+      initForm();
+      initFilteri();
+      initSorting();
+      ucitajPoslovniceZaFormu();
+      ucitajEkraneZaFormu(); // NOVO
+
+      slotCounter =
+        document.querySelectorAll("#slots-container .slot-row").length || 1;
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closePreview();
+          closeEditModal();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

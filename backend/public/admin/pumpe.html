@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Displeji – Pregled pumpi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind preko CDN-a -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-700">
+        <h1 class="text-xl font-bold tracking-wide">VisioCast</h1>
+        <p class="text-xs text-slate-400 mt-1">Kontrolni centar pumpi</p>
+      </div>
+
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <!-- REKLAME -->
+        <a href="index.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>📺</span>
+          <span>Reklame</span>
+        </a>
+
+        <!-- POSLOVNICE (AKTIVNO) -->
+        <a href="pumpe.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800 text-sm font-medium">
+          <span>🏬</span>
+          <span>Poslovnice</span>
+        </a>
+
+        <!-- EKRANI -->
+        <a href="ekrani.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>🖥️</span>
+          <span>Ekrani</span>
+        </a>
+
+        <!-- REGISTRI -->
+        <a href="registri.html"
+           class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-sm text-slate-300">
+          <span>📚</span>
+          <span>Registri</span>
+        </a>
+      </nav>
+
+      <div class="px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
+        SC – VisioCast
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col">
+      <!-- Top bar -->
+      <header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6">
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight">Pregled pumpi</h2>
+          <p class="text-xs text-slate-500">
+            Faza 1 – filteri i pretraga (spojeno na API)
+          </p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span>Podaci dolaze sa API-ja (port 4000)</span>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <section class="flex-1 p-6 space-y-4">
+
+        <!-- STAT KARTICE -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1">
+          <!-- Ukupno pumpe -->
+          <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Ukupno pumpi
+            </span>
+            <span id="stat-total" class="mt-1 text-xl font-semibold text-slate-900">
+              –
+            </span>
+          </div>
+
+          <!-- Online (ima aktivnu kampanju) -->
+          <div class="bg-white border border-emerald-100 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Aktivne (ONLINE)
+            </span>
+            <span id="stat-online" class="mt-1 text-xl font-semibold text-emerald-600">
+              –
+            </span>
+          </div>
+
+          <!-- Offline (nema aktivnu kampanju) -->
+          <div class="bg-white border border-rose-100 rounded-2xl px-4 py-3 flex flex-col justify-center">
+            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+              Bez aktivne kampanje (OFFLINE)
+            </span>
+            <span id="stat-offline" class="mt-1 text-xl font-semibold text-rose-600">
+              –
+            </span>
+          </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-slate-800">
+              Filteri i pretraga
+            </h3>
+            <button id="btn-clear-filters"
+              class="text-xs px-3 py-1 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50">
+              Resetuj filtere
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <!-- Search -->
+            <div class="md:col-span-1">
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Pretraga (naziv / lokacija)
+              </label>
+              <div class="relative">
+                <input
+                  id="filter-search"
+                  type="text"
+                  placeholder="Npr. Ilidža, Grbavica, Lukavica..."
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                  🔍
+                </span>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Status kampanje
+              </label>
+              <select
+                id="filter-status"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+                <option value="all">Sve pumpe</option>
+                <option value="online">Samo ONLINE (aktivne)</option>
+                <option value="offline">Samo OFFLINE (bez kampanje)</option>
+              </select>
+            </div>
+
+            <!-- Reklama -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1 tracking-wide">
+                Aktivna reklama
+              </label>
+              <select
+                id="filter-reklama"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+                <option value="all">Sve reklame</option>
+                <!-- opcije punimo iz JS-a -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA PUMPI -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-800">Pumpe</h3>
+              <p class="text-xs text-slate-500">
+                Prikaz pumpi nakon filtriranja
+              </p>
+            </div>
+            <div class="text-xs text-slate-500">
+              <span id="label-count">0 pumpi</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto -mx-4 md:mx-0">
+            <table class="min-w-full text-xs md:text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50/60 text-[11px] uppercase tracking-wide text-slate-500">
+                  <th class="text-left px-4 py-2 font-semibold">Poslovnica</th>
+                  <th class="text-left px-4 py-2 font-semibold">Status</th>
+                  <th class="text-left px-4 py-2 font-semibold">Reklame</th>
+                  <th class="text-left px-4 py-2 font-semibold">Akcije</th>
+                </tr>
+              </thead>
+              <tbody id="pump-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- redovi idu iz JS-a -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- JS LOGIKA -->
+  <script>
+    // API base – usklađeno sa ostalim stranicama
+    window.API_BASE = window.API_BASE || "http://localhost:4000";
+    const API_BASE = window.API_BASE;
+
+    // Globalni niz pumpi (view-model, ne raw iz backenda)
+    // { id, naziv, lokacija, status: "online"/"offline", aktivneReklame: [] }
+    let pumpe = [];
+
+    const tbody = document.getElementById("pump-table-body");
+    const labelCount = document.getElementById("label-count");
+
+    const filterSearch = document.getElementById("filter-search");
+    const filterStatus = document.getElementById("filter-status");
+    const filterReklama = document.getElementById("filter-reklama");
+    const btnClear = document.getElementById("btn-clear-filters");
+
+    const elTotal = document.getElementById("stat-total");
+    const elOnline = document.getElementById("stat-online");
+    const elOffline = document.getElementById("stat-offline");
+
+    // Helper: status badge
+    function renderStatusBadge(status) {
+      const base = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium";
+      if (status === "online") {
+        return `
+          <span class="${base} bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1"></span>
+            ONLINE – aktivna kampanja
+          </span>
+        `;
+      }
+      return `
+        <span class="${base} bg-rose-50 text-rose-700 border border-rose-100">
+          <span class="h-1.5 w-1.5 rounded-full bg-rose-500 mr-1"></span>
+          OFFLINE – nema kampanje
+        </span>
+      `;
+    }
+
+    // Popuni dropdown reklama iz podataka
+    function populateReklamaFilter() {
+      while (filterReklama.options.length > 1) {
+        filterReklama.remove(1);
+      }
+
+      const set = new Set();
+      pumpe.forEach(p => {
+        (p.aktivneReklame || []).forEach(naziv => {
+          if (naziv && naziv.trim() !== "") {
+            set.add(naziv.trim());
+          }
+        });
+      });
+
+      set.forEach(rek => {
+        const opt = document.createElement("option");
+        opt.value = rek;
+        opt.textContent = rek;
+        filterReklama.appendChild(opt);
+      });
+    }
+
+    // Glavni render
+    function renderTable() {
+      const q = filterSearch.value.trim().toLowerCase();
+      const statusVal = filterStatus.value;
+      const reklamaVal = filterReklama.value;
+
+      let filtered = pumpe.filter(p => {
+        // pretraga
+        if (q) {
+          const combined =
+            ((p.naziv || "") + " " + (p.lokacija || "")).toLowerCase();
+          if (!combined.includes(q)) return false;
+        }
+
+        // status (online/offline)
+        if (statusVal !== "all" && p.status !== statusVal) return false;
+
+        // reklama (pumpa ima listu aktivnih reklama)
+        if (reklamaVal !== "all") {
+          const arr = p.aktivneReklame || [];
+          if (!arr.includes(reklamaVal)) return false;
+        }
+
+        return true;
+      });
+
+      tbody.innerHTML = "";
+
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-4 py-6 text-center text-xs text-slate-400">
+              Nema pumpi za odabrane filtere.
+            </td>
+          </tr>
+        `;
+        labelCount.textContent = "0 pumpi";
+      } else {
+        // sort – online (aktivne) prvo
+        filtered.sort((a, b) => {
+          if (a.status === b.status) {
+            return (a.naziv || "").localeCompare(b.naziv || "", "bs", { sensitivity: "base" });
+          }
+          return a.status === "online" ? -1 : 1;
+        });
+
+        for (const p of filtered) {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50/80";
+
+          const reklameText = (p.aktivneReklame && p.aktivneReklame.length)
+            ? p.aktivneReklame.join(", ")
+            : "—";
+
+          tr.innerHTML = `
+            <td class="px-4 py-2 align-middle">
+              <div class="text-xs font-medium text-slate-800">${p.naziv || "-"}</div>
+              <div class="text-[11px] text-slate-500">${p.lokacija || ""}</div>
+            </td>
+            <td class="px-4 py-2 align-middle">
+              ${renderStatusBadge(p.status)}
+            </td>
+            <td class="px-4 py-2 align-middle">
+              <span class="text-xs text-slate-700">${reklameText}</span>
+            </td>
+            <td class="px-4 py-2 align-middle">
+              <a
+                href="player.html?poslovnica=${encodeURIComponent(p.id)}"
+                target="_blank"
+                class="inline-flex items-center px-3 py-1 rounded-full bg-sky-600 text-white text-[11px] hover:bg-sky-700"
+              >
+                Otvori ekran
+              </a>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        labelCount.textContent =
+          filtered.length + (filtered.length === 1 ? " pumpa" : " pumpi");
+      }
+
+      // stat kartice (uvijek po punoj listi "pumpe")
+      const total = pumpe.length;
+      const online = pumpe.filter(p => p.status === "online").length;
+      const offline = pumpe.filter(p => p.status === "offline").length;
+
+      if (elTotal) elTotal.textContent = total + (total === 1 ? " pumpa" : " pumpi");
+      if (elOnline) elOnline.textContent = online.toString();
+      if (elOffline) elOffline.textContent = offline.toString();
+    }
+
+    function resetFilters() {
+      filterSearch.value = "";
+      filterStatus.value = "all";
+      filterReklama.value = "all";
+      renderTable();
+    }
+
+async function loadPumpe() {
+  try {
+    // 1) Poslovnice
+    const resP = await fetch(`${API_BASE}/api/poslovnice`);
+    if (!resP.ok) throw new Error("Greška pri čitanju poslovnica");
+    const poslovnice = await resP.json();
+
+    // 2) Reklame (ovdje je ključ)
+    const resR = await fetch(`${API_BASE}/api/reklame`);
+    if (!resR.ok) throw new Error("Greška pri čitanju reklama");
+    const reklame = await resR.json();
+
+    // Gradimo view-model pumpi:
+    // status = "online" ako postoji bar jedna reklama za tu poslovnicu
+    //          čiji je status "Aktivna" (iz /api/reklame)
+    pumpe = Array.isArray(poslovnice)
+      ? poslovnice.map((p) => {
+          // sve reklame koje imaju ovu poslovnicu u poslovniceIds
+          const reklameZaP = reklame.filter((r) => {
+            const listaPoslovnica = Array.isArray(r.poslovniceIds)
+              ? r.poslovniceIds
+              : [];
+            const isForThis =
+              listaPoslovnica.includes(p.id);
+
+            const statusStr = String(r.status || "").toLowerCase();
+            const isActive = statusStr.includes("aktiv");
+
+            return isForThis && isActive;
+          });
+
+          const aktivneReklame = reklameZaP.map((r) => r.naziv).filter(Boolean);
+          const hasActive = aktivneReklame.length > 0;
+
+          return {
+            id: p.id,
+            naziv: p.naziv || "Nepoznato ime poslovnice",
+            lokacija: p.grad || p.adresa || "",
+            status: hasActive ? "online" : "offline",
+            aktivneReklame,
+          };
+        })
+      : [];
+  } catch (err) {
+    console.error(err);
+    pumpe = [];
+  }
+
+  populateReklamaFilter();
+  renderTable();
+}
+
+    // Eventi
+    filterSearch.addEventListener("input", renderTable);
+    filterStatus.addEventListener("change", renderTable);
+    filterReklama.addEventListener("change", renderTable);
+    btnClear.addEventListener("click", resetFilters);
+
+    // Init – prvo povuci sa backenda, pa prikaži
+    loadPumpe();
+  </script>
+</body>
+</html>

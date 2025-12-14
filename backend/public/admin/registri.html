@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Displeji – Registri</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+<div class="min-h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col">
+    <div class="px-6 py-4 border-b border-slate-700">
+      <h1 class="text-xl font-bold tracking-wide">VisioCast</h1>
+      <p class="text-xs text-slate-400 mt-1">Kontrola reklama i ekrana</p>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+      <a href="index.html"
+         class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-300">
+        <span>📺</span><span>Reklame</span>
+      </a>
+      <a href="pumpe.html"
+         class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-300">
+        <span>🏬</span><span>Poslovnice</span>
+      </a>
+      <a href="ekrani.html"
+         class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-300">
+        <span>🖥️</span><span>Ekrani</span>
+      </a>
+      <a href="registri.html"
+         class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800 font-medium">
+        <span>📚</span><span>Registri</span>
+      </a>
+    </nav>
+
+    <div class="px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
+      SC – VisioCast
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col">
+
+    <!-- HEADER -->
+    <header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6">
+      <div>
+        <h2 class="text-lg font-semibold tracking-tight">Registri</h2>
+        <p class="text-xs text-slate-500">
+          Pregled komitenata, poslovnica i ekrana (povezano na backend API)
+        </p>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-slate-500">
+        <span id="status-dot" class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        <span id="status-text">Spojeno na server (port 4000)</span>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <section class="flex-1 p-6 space-y-4">
+
+      <!-- TABS -->
+      <div class="bg-white rounded-2xl border border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div class="flex gap-2 text-xs">
+          <button id="tab-btn-komitenti"
+                  class="tab-btn px-3 py-1.5 rounded-full bg-slate-900 text-white font-medium">
+            Komitenti
+          </button>
+          <button id="tab-btn-poslovnice"
+                  class="tab-btn px-3 py-1.5 rounded-full text-slate-600 hover:bg-slate-100">
+            Poslovnice
+          </button>
+          <button id="tab-btn-ekrani"
+                  class="tab-btn px-3 py-1.5 rounded-full text-slate-600 hover:bg-slate-100">
+            Ekrani
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500">
+          * Podaci se čuvaju na serveru – potrebno da backend radi.
+        </p>
+      </div>
+
+      <!-- TAB: KOMITENTI -->
+      <div id="tab-komitenti" class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-800">Komitenti</h3>
+            <p class="text-xs text-slate-500">
+              Lista svih klijenata kojima vodiš displeje.
+            </p>
+          </div>
+          <button id="btn-add-komitent"
+                  class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+            + Dodaj novog komitenta
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="text-left px-4 py-2 font-semibold">Naziv</th>
+              <th class="text-left px-4 py-2 font-semibold">Grad</th>
+              <th class="text-left px-4 py-2 font-semibold">Kontakt</th>
+              <th class="text-left px-4 py-2 font-semibold">Telefon</th>
+              <th class="text-left px-4 py-2 font-semibold">Napomena</th>
+              <th class="text-right px-4 py-2 font-semibold">Akcije</th>
+            </tr>
+            </thead>
+            <tbody id="tbody-komitenti" class="divide-y divide-slate-100 text-xs">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: POSLOVNICE -->
+      <div id="tab-poslovnice" class="space-y-3 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-800">Poslovnice</h3>
+            <p class="text-xs text-slate-500">
+              Sve pumpe / objekti po komitentima (broj ekrana po poslovnici).
+            </p>
+          </div>
+          <button id="btn-add-poslovnica"
+                  class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+            + Dodaj novu poslovnicu
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="text-left px-4 py-2 font-semibold">Poslovnica</th>
+              <th class="text-left px-4 py-2 font-semibold">Komitent</th>
+              <th class="text-left px-4 py-2 font-semibold">Grad</th>
+              <th class="text-left px-4 py-2 font-semibold">Broj ekrana</th>
+              <th class="text-right px-4 py-2 font-semibold">Akcije</th>
+            </tr>
+            </thead>
+            <tbody id="tbody-poslovnice" class="divide-y divide-slate-100 text-xs">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: EKRANI -->
+      <div id="tab-ekrani" class="space-y-3 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-800">Ekrani</h3>
+            <p class="text-xs text-slate-500">
+              Svi pojedinačni displeji sa vezom na poslovnicu i komitenta.
+            </p>
+          </div>
+          <button id="btn-add-ekran"
+                  class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+            + Dodaj novi ekran
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="text-left px-4 py-2 font-semibold">Naziv ekrana</th>
+              <th class="text-left px-4 py-2 font-semibold">Poslovnica</th>
+              <th class="text-left px-4 py-2 font-semibold">Komitent</th>
+              <th class="text-left px-4 py-2 font-semibold">Lokacija / tip</th>
+              <th class="text-left px-4 py-2 font-semibold">Napomena</th>
+              <th class="text-right px-4 py-2 font-semibold">Akcije</th>
+            </tr>
+            </thead>
+            <tbody id="tbody-ekrani" class="divide-y divide-slate-100 text-xs">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- MODAL: KOMITENT -->
+<div id="komitent-modal"
+     class="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+      <div>
+        <h3 id="komitent-modal-title" class="text-sm font-semibold text-slate-900">Novi komitent</h3>
+        <p class="text-xs text-slate-500">Osnovni podaci o klijentu</p>
+      </div>
+      <button id="btn-modal-close"
+              class="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50">
+        Zatvori
+      </button>
+    </div>
+
+    <form id="komitent-form" class="px-5 py-4 space-y-3 text-sm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Naziv komitenta *</label>
+          <input name="naziv" required
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. NIS Gazprom" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Grad</label>
+          <input name="grad"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Sarajevo" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Adresa</label>
+          <input name="adresa"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Zmaja od Bosne bb" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Kontakt osoba</label>
+          <input name="kontakt"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Marko Petrović" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Telefon</label>
+          <input name="telefon"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="+387 ..." />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Napomena</label>
+          <input name="napomena"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Ima više pumpi u BiH" />
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 mt-2">
+        <button type="button" id="btn-modal-cancel"
+                class="text-xs px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">
+          Odustani
+        </button>
+        <button type="submit"
+                class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+          Sačuvaj
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: POSLOVNICA -->
+<div id="poslovnica-modal"
+     class="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+      <div>
+        <h3 id="poslovnica-modal-title" class="text-sm font-semibold text-slate-900">Nova poslovnica</h3>
+        <p class="text-xs text-slate-500">Veže se na izabranog komitenta</p>
+      </div>
+      <button id="btn-poslovnica-close"
+              class="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50">
+        Zatvori
+      </button>
+    </div>
+
+    <form id="poslovnica-form" class="px-5 py-4 space-y-3 text-sm">
+      <div>
+        <label class="block text-[11px] font-medium text-slate-500 mb-1">Komitent *</label>
+        <select name="komitentId" id="poslovnica-komitent-select" required
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Naziv poslovnice *</label>
+          <input name="naziv" required
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Gazprom Stup" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Grad</label>
+          <input name="grad"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Sarajevo" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-slate-500 mb-1">Adresa</label>
+        <input name="adresa"
+               class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+               placeholder="npr. Stupska bb" />
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 mt-2">
+        <button type="button" id="btn-poslovnica-cancel"
+                class="text-xs px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">
+          Odustani
+        </button>
+        <button type="submit"
+                class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+          Sačuvaj
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: EKRAN -->
+<div id="ekran-modal"
+     class="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+      <div>
+        <h3 id="ekran-modal-title" class="text-sm font-semibold text-slate-900">Novi ekran</h3>
+        <p class="text-xs text-slate-500">Ekran se veže na konkretnu poslovnicu</p>
+      </div>
+      <button id="btn-ekran-close"
+              class="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50">
+        Zatvori
+      </button>
+    </div>
+
+    <form id="ekran-form" class="px-5 py-4 space-y-3 text-sm">
+      <div>
+        <label class="block text-[11px] font-medium text-slate-500 mb-1">Poslovnica *</label>
+        <select name="poslovnicaId" id="ekran-poslovnica-select" required
+                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60">
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Naziv ekrana *</label>
+          <input name="naziv" required
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Ilidža – Ekran 3" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-500 mb-1">Lokacija / tip</label>
+          <input name="tip"
+                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+                 placeholder="npr. Unutra, kod kase" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-slate-500 mb-1">Napomena</label>
+        <input name="napomena"
+               class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+               placeholder="npr. Glavni reklamni ekran" />
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 mt-2">
+        <button type="button" id="btn-ekran-cancel"
+                class="text-xs px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">
+          Odustani
+        </button>
+        <button type="submit"
+                class="text-xs px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+          Sačuvaj
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JS LOGIKA -->
+<script>
+  window.API_BASE = window.API_BASE || "http://localhost:4000";
+  const API_BASE = window.API_BASE;
+
+  let komitenti = [];
+  let poslovnice = [];
+  let displeji = [];
+
+  // EDIT MODE
+  let editMode = null; // "komitent" | "poslovnica" | "ekran"
+  let editId = null;
+
+  // ELEMENTI
+  const tabKomitenti = document.getElementById("tab-komitenti");
+  const tabPoslovnice = document.getElementById("tab-poslovnice");
+  const tabEkrani = document.getElementById("tab-ekrani");
+  const tabBtns = document.querySelectorAll(".tab-btn");
+
+  const tbodyKomitenti = document.getElementById("tbody-komitenti");
+  const tbodyPoslovnice = document.getElementById("tbody-poslovnice");
+  const tbodyEkrani = document.getElementById("tbody-ekrani");
+
+  const btnAddKomitent = document.getElementById("btn-add-komitent");
+  const btnAddPoslovnica = document.getElementById("btn-add-poslovnica");
+  const btnAddEkran = document.getElementById("btn-add-ekran");
+
+  // modali
+  const modalKomitent = document.getElementById("komitent-modal");
+  const formKomitent = document.getElementById("komitent-form");
+  const btnModalClose = document.getElementById("btn-modal-close");
+  const btnModalCancel = document.getElementById("btn-modal-cancel");
+  const komitentModalTitle = document.getElementById("komitent-modal-title");
+
+  const modalPoslovnica = document.getElementById("poslovnica-modal");
+  const formPoslovnica = document.getElementById("poslovnica-form");
+  const poslSelectKomitent = document.getElementById("poslovnica-komitent-select");
+  const btnPoslovnicaClose = document.getElementById("btn-poslovnica-close");
+  const btnPoslovnicaCancel = document.getElementById("btn-poslovnica-cancel");
+  const poslovnicaModalTitle = document.getElementById("poslovnica-modal-title");
+
+  const modalEkran = document.getElementById("ekran-modal");
+  const formEkran = document.getElementById("ekran-form");
+  const ekranSelectPoslovnica = document.getElementById("ekran-poslovnica-select");
+  const btnEkranClose = document.getElementById("btn-ekran-close");
+  const btnEkranCancel = document.getElementById("btn-ekran-cancel");
+  const ekranModalTitle = document.getElementById("ekran-modal-title");
+
+  const statusDot = document.getElementById("status-dot");
+  const statusText = document.getElementById("status-text");
+
+  function setStatus(ok, msg) {
+    if (!statusDot || !statusText) return;
+    statusDot.className = "h-2 w-2 rounded-full " + (ok ? "bg-emerald-500" : "bg-red-500");
+    statusText.textContent = msg;
+  }
+
+  // TAB
+  function switchTab(name) {
+    tabKomitenti.classList.toggle("hidden", name !== "komitenti");
+    tabPoslovnice.classList.toggle("hidden", name !== "poslovnice");
+    tabEkrani.classList.toggle("hidden", name !== "ekrani");
+
+    tabBtns.forEach(btn => {
+      btn.classList.remove("bg-slate-900", "text-white", "font-medium");
+      btn.classList.add("text-slate-600");
+    });
+
+    if (name === "komitenti") {
+      document.getElementById("tab-btn-komitenti").classList.add("bg-slate-900","text-white","font-medium");
+    } else if (name === "poslovnice") {
+      document.getElementById("tab-btn-poslovnice").classList.add("bg-slate-900","text-white","font-medium");
+    } else {
+      document.getElementById("tab-btn-ekrani").classList.add("bg-slate-900","text-white","font-medium");
+    }
+  }
+
+  document.getElementById("tab-btn-komitenti").addEventListener("click", () => switchTab("komitenti"));
+  document.getElementById("tab-btn-poslovnice").addEventListener("click", () => switchTab("poslovnice"));
+  document.getElementById("tab-btn-ekrani").addEventListener("click", () => switchTab("ekrani"));
+
+  // API
+  async function apiGet(path) {
+    const res = await fetch(API_BASE + path);
+    if (!res.ok) throw new Error("Greška GET " + path + " (" + res.status + ")");
+    return res.json();
+  }
+
+  async function apiPost(path, payload) {
+    const res = await fetch(API_BASE + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error("Greška POST " + path + " " + res.status + ": " + txt);
+    }
+    return res.json();
+  }
+
+  async function apiPut(path, payload) {
+    const res = await fetch(API_BASE + path, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error("Greška PUT " + path + " " + res.status + ": " + txt);
+    }
+    return res.json();
+  }
+
+  async function apiDelete(path) {
+    const res = await fetch(API_BASE + path, { method: "DELETE" });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error("Greška DELETE " + path + " " + res.status + ": " + txt);
+    }
+    return res.json().catch(() => ({}));
+  }
+
+  // RENDER
+  function renderKomitenti() {
+    tbodyKomitenti.innerHTML = "";
+    komitenti.forEach(k => {
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50";
+
+      tr.innerHTML = `
+        <td class="px-4 py-2">
+          <div class="text-xs font-semibold text-slate-900">${k.naziv}</div>
+          <div class="text-[11px] text-slate-500">${k.adresa || ""}</div>
+        </td>
+        <td class="px-4 py-2">${k.grad || ""}</td>
+        <td class="px-4 py-2">${k.kontakt || ""}</td>
+        <td class="px-4 py-2">${k.telefon || ""}</td>
+        <td class="px-4 py-2">${k.napomena || ""}</td>
+        <td class="px-4 py-2 text-right">
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 mr-2"
+            onclick="otvoriUrediKomitenta('${k.id}')">
+            ✏️ Uredi
+          </button>
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50"
+            onclick="obrisiKomitenta('${k.id}')">
+            🗑 Obriši
+          </button>
+        </td>
+      `;
+      tbodyKomitenti.appendChild(tr);
+    });
+  }
+
+  function renderPoslovnice() {
+    tbodyPoslovnice.innerHTML = "";
+    poslovnice.forEach(p => {
+      const komitent = komitenti.find(k => k.id === p.komitentId);
+      const brojEkrana = displeji.filter(d => d.poslovnicaId === p.id).length;
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50";
+      tr.innerHTML = `
+        <td class="px-4 py-2">
+          <div class="text-xs font-semibold text-slate-900">${p.naziv}</div>
+          <div class="text-[11px] text-slate-500">${p.adresa || ""}</div>
+        </td>
+        <td class="px-4 py-2">${komitent ? komitent.naziv : "-"}</td>
+        <td class="px-4 py-2">${p.grad || ""}</td>
+        <td class="px-4 py-2">${brojEkrana}</td>
+        <td class="px-4 py-2 text-right">
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 mr-2"
+            onclick="otvoriUrediPoslovnicu('${p.id}')">
+            ✏️ Uredi
+          </button>
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50"
+            onclick="obrisiPoslovnicu('${p.id}')">
+            🗑 Obriši
+          </button>
+        </td>
+      `;
+      tbodyPoslovnice.appendChild(tr);
+    });
+  }
+
+  function renderEkrani() {
+    tbodyEkrani.innerHTML = "";
+    displeji.forEach(d => {
+      const pos = poslovnice.find(p => p.id === d.poslovnicaId);
+      const komitent = pos ? komitenti.find(k => k.id === pos.komitentId) : null;
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50";
+      tr.innerHTML = `
+        <td class="px-4 py-2">${d.naziv}</td>
+        <td class="px-4 py-2">${pos ? pos.naziv : "-"}</td>
+        <td class="px-4 py-2">${komitent ? komitent.naziv : "-"}</td>
+        <td class="px-4 py-2">${d.tip || ""}</td>
+        <td class="px-4 py-2">${d.napomena || ""}</td>
+        <td class="px-4 py-2 text-right">
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 mr-2"
+            onclick="otvoriUrediEkran('${d.id}')">
+            ✏️ Uredi
+          </button>
+          <button
+            class="inline-flex items-center px-2 py-1 text-[11px] rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50"
+            onclick="obrisiEkran('${d.id}')">
+            🗑 Obriši
+          </button>
+        </td>
+      `;
+      tbodyEkrani.appendChild(tr);
+    });
+  }
+
+  // LOAD
+  async function ucitajSve() {
+    try {
+      setStatus(true, "Učitavam podatke sa servera...");
+      const [kRes, pRes, dRes] = await Promise.all([
+        apiGet("/api/komitenti"),
+        apiGet("/api/poslovnice"),
+        apiGet("/api/ekrani")
+      ]);
+
+      komitenti = kRes;
+      poslovnice = pRes;
+      displeji = dRes;
+
+      renderKomitenti();
+      renderPoslovnice();
+      renderEkrani();
+      setStatus(true, "Podaci učitani sa servera (port 4000)");
+    } catch (err) {
+      console.error(err);
+      setStatus(false, "Greška pri konekciji na server");
+      alert("Greška pri učitavanju podataka sa servera. Provjeri da li je backend pokrenut.");
+    }
+  }
+
+  // DELETE
+  async function obrisiKomitenta(id) {
+    if (!confirm("Da li sigurno želiš obrisati ovog komitenta i sve njegove poslovnice i ekrane?")) return;
+    try {
+      await apiDelete(`/api/komitenti/${id}`);
+      komitenti = komitenti.filter(k => k.id !== id);
+
+      poslovnice = poslovnice.filter(p => p.komitentId !== id);
+      const validPoslovniceIds = new Set(poslovnice.map(p => p.id));
+      displeji = displeji.filter(d => validPoslovniceIds.has(d.poslovnicaId));
+
+      renderKomitenti();
+      renderPoslovnice();
+      renderEkrani();
+    } catch (err) {
+      console.error(err);
+      alert("Greška pri brisanju komitenta.");
+    }
+  }
+
+  async function obrisiPoslovnicu(id) {
+    if (!confirm("Obrisati ovu poslovnicu i sve ekrane u njoj?")) return;
+    try {
+      await apiDelete(`/api/poslovnice/${id}`);
+      poslovnice = poslovnice.filter(p => p.id !== id);
+      displeji = displeji.filter(d => d.poslovnicaId !== id);
+      renderPoslovnice();
+      renderEkrani();
+    } catch (err) {
+      console.error(err);
+      alert("Greška pri brisanju poslovnice.");
+    }
+  }
+
+  async function obrisiEkran(id) {
+    if (!confirm("Obrisati ovaj ekran?")) return;
+    try {
+      await apiDelete(`/api/ekrani/${id}`);
+      displeji = displeji.filter(d => d.id !== id);
+      renderEkrani();
+      renderPoslovnice();
+    } catch (err) {
+      console.error(err);
+      alert("Greška pri brisanju ekrana.");
+    }
+  }
+
+  // expose deletes
+  window.obrisiKomitenta = obrisiKomitenta;
+  window.obrisiPoslovnicu = obrisiPoslovnicu;
+  window.obrisiEkran = obrisiEkran;
+
+  // EDIT OPENERS
+  function otvoriUrediKomitenta(id) {
+    const k = komitenti.find(x => x.id === id);
+    if (!k) return alert("Komitent nije pronađen.");
+
+    editMode = "komitent";
+    editId = id;
+    komitentModalTitle.textContent = "Uredi komitenta";
+
+    formKomitent.naziv.value = k.naziv || "";
+    formKomitent.grad.value = k.grad || "";
+    formKomitent.adresa.value = k.adresa || "";
+    formKomitent.kontakt.value = k.kontakt || "";
+    formKomitent.telefon.value = k.telefon || "";
+    formKomitent.napomena.value = k.napomena || "";
+
+    modalKomitent.classList.remove("hidden");
+  }
+
+  function otvoriUrediPoslovnicu(id) {
+    const p = poslovnice.find(x => x.id === id);
+    if (!p) return alert("Poslovnica nije pronađena.");
+
+    editMode = "poslovnica";
+    editId = id;
+    poslovnicaModalTitle.textContent = "Uredi poslovnicu";
+
+    fillPoslovnicaKomitentSelect();
+    formPoslovnica.komitentId.value = p.komitentId || "";
+    formPoslovnica.naziv.value = p.naziv || "";
+    formPoslovnica.grad.value = p.grad || "";
+    formPoslovnica.adresa.value = p.adresa || "";
+
+    modalPoslovnica.classList.remove("hidden");
+  }
+
+  function otvoriUrediEkran(id) {
+    const e = displeji.find(x => x.id === id);
+    if (!e) return alert("Ekran nije pronađen.");
+
+    editMode = "ekran";
+    editId = id;
+    ekranModalTitle.textContent = "Uredi ekran";
+
+    fillEkranPoslovnicaSelect();
+    formEkran.poslovnicaId.value = e.poslovnicaId || "";
+    formEkran.naziv.value = e.naziv || "";
+    formEkran.tip.value = e.tip || "";
+    formEkran.napomena.value = e.napomena || "";
+
+    modalEkran.classList.remove("hidden");
+  }
+
+  window.otvoriUrediKomitenta = otvoriUrediKomitenta;
+  window.otvoriUrediPoslovnicu = otvoriUrediPoslovnicu;
+  window.otvoriUrediEkran = otvoriUrediEkran;
+
+  // MODAL: KOMITENT
+  function openKomitentModal() {
+    editMode = null;
+    editId = null;
+    komitentModalTitle.textContent = "Novi komitent";
+    formKomitent.reset();
+    modalKomitent.classList.remove("hidden");
+  }
+  function closeKomitentModal() {
+    modalKomitent.classList.add("hidden");
+    if (editMode === "komitent") { editMode = null; editId = null; }
+  }
+
+  btnAddKomitent.addEventListener("click", openKomitentModal);
+  btnModalClose.addEventListener("click", closeKomitentModal);
+  btnModalCancel.addEventListener("click", closeKomitentModal);
+
+  formKomitent.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = new FormData(formKomitent);
+
+    const payload = {
+      naziv: (data.get("naziv") || "").trim(),
+      grad: (data.get("grad") || "").trim(),
+      adresa: (data.get("adresa") || "").trim(),
+      kontakt: (data.get("kontakt") || "").trim(),
+      telefon: (data.get("telefon") || "").trim(),
+      napomena: (data.get("napomena") || "").trim()
+    };
+
+    if (!payload.naziv) {
+      alert("Naziv komitenta je obavezan.");
+      return;
+    }
+
+    try {
+      if (editMode === "komitent" && editId) {
+        const updated = await apiPut(`/api/komitenti/${editId}`, payload);
+        komitenti = komitenti.map(k => k.id === editId ? updated : k);
+        editMode = null; editId = null;
+        renderKomitenti();
+        closeKomitentModal();
+      } else {
+        const saved = await apiPost("/api/komitenti", payload);
+        komitenti.push(saved);
+        renderKomitenti();
+        closeKomitentModal();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Greška: " + (err.message || err));
+    }
+  });
+
+  // MODAL: POSLOVNICA
+  function fillPoslovnicaKomitentSelect() {
+    poslSelectKomitent.innerHTML = "";
+    if (!komitenti.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nema komitenata – prvo dodaj komitenta";
+      poslSelectKomitent.appendChild(opt);
+      poslSelectKomitent.disabled = true;
+      return;
+    }
+    poslSelectKomitent.disabled = false;
+    komitenti.forEach(k => {
+      const opt = document.createElement("option");
+      opt.value = k.id;
+      opt.textContent = k.naziv + (k.grad ? " (" + k.grad + ")" : "");
+      poslSelectKomitent.appendChild(opt);
+    });
+  }
+
+  function openPoslovnicaModal() {
+    editMode = null;
+    editId = null;
+    poslovnicaModalTitle.textContent = "Nova poslovnica";
+    fillPoslovnicaKomitentSelect();
+    formPoslovnica.reset();
+    modalPoslovnica.classList.remove("hidden");
+  }
+  function closePoslovnicaModal() {
+    modalPoslovnica.classList.add("hidden");
+    if (editMode === "poslovnica") { editMode = null; editId = null; }
+  }
+
+  btnAddPoslovnica.addEventListener("click", openPoslovnicaModal);
+  btnPoslovnicaClose.addEventListener("click", closePoslovnicaModal);
+  btnPoslovnicaCancel.addEventListener("click", closePoslovnicaModal);
+
+  formPoslovnica.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = new FormData(formPoslovnica);
+
+    const komitentId = (data.get("komitentId") || "").toString();
+    const naziv = (data.get("naziv") || "").trim();
+
+    if (!komitentId || !naziv) {
+      alert("Komitent i naziv poslovnice su obavezni.");
+      return;
+    }
+
+    const payload = {
+      komitentId,
+      naziv,
+      grad: (data.get("grad") || "").trim(),
+      adresa: (data.get("adresa") || "").trim()
+    };
+
+    try {
+      if (editMode === "poslovnica" && editId) {
+        const updated = await apiPut(`/api/poslovnice/${editId}`, payload);
+        poslovnice = poslovnice.map(p => p.id === editId ? updated : p);
+        editMode = null; editId = null;
+        renderPoslovnice();
+        renderEkrani();
+        closePoslovnicaModal();
+      } else {
+        const saved = await apiPost("/api/poslovnice", payload);
+        poslovnice.push(saved);
+        renderPoslovnice();
+        renderEkrani();
+        closePoslovnicaModal();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Greška: " + (err.message || err));
+    }
+  });
+
+  // MODAL: EKRAN
+  function fillEkranPoslovnicaSelect() {
+    ekranSelectPoslovnica.innerHTML = "";
+    if (!poslovnice.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nema poslovnica – prvo dodaj poslovnicu";
+      ekranSelectPoslovnica.appendChild(opt);
+      ekranSelectPoslovnica.disabled = true;
+      return;
+    }
+    ekranSelectPoslovnica.disabled = false;
+    poslovnice.forEach(p => {
+      const komitent = komitenti.find(k => k.id === p.komitentId);
+      const label = p.naziv + (komitent ? " – " + komitent.naziv : "");
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = label;
+      ekranSelectPoslovnica.appendChild(opt);
+    });
+  }
+
+  function openEkranModal() {
+    editMode = null;
+    editId = null;
+    ekranModalTitle.textContent = "Novi ekran";
+    fillEkranPoslovnicaSelect();
+    formEkran.reset();
+    modalEkran.classList.remove("hidden");
+  }
+  function closeEkranModal() {
+    modalEkran.classList.add("hidden");
+    if (editMode === "ekran") { editMode = null; editId = null; }
+  }
+
+  btnAddEkran.addEventListener("click", openEkranModal);
+  btnEkranClose.addEventListener("click", closeEkranModal);
+  btnEkranCancel.addEventListener("click", closeEkranModal);
+
+  formEkran.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = new FormData(formEkran);
+
+    const poslovnicaId = (data.get("poslovnicaId") || "").toString();
+    const naziv = (data.get("naziv") || "").trim();
+
+    if (!poslovnicaId || !naziv) {
+      alert("Poslovnica i naziv ekrana su obavezni.");
+      return;
+    }
+
+    const payload = {
+      poslovnicaId,
+      naziv,
+      tip: (data.get("tip") || "").trim(),
+      napomena: (data.get("napomena") || "").trim()
+    };
+
+    try {
+      if (editMode === "ekran" && editId) {
+        const updated = await apiPut(`/api/ekrani/${editId}`, payload);
+        displeji = displeji.map(d => d.id === editId ? updated : d);
+        editMode = null; editId = null;
+        renderEkrani();
+        renderPoslovnice();
+        closeEkranModal();
+      } else {
+        const saved = await apiPost("/api/ekrani", payload);
+        displeji.push(saved);
+        renderEkrani();
+        renderPoslovnice();
+        closeEkranModal();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Greška: " + (err.message || err));
+    }
+  });
+
+  // ESC zatvaranje modala
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      modalKomitent.classList.add("hidden");
+      modalPoslovnica.classList.add("hidden");
+      modalEkran.classList.add("hidden");
+      editMode = null;
+      editId = null;
+    }
+  });
+
+  // INIT
+  switchTab("komitenti");
+  ucitajSve();
+</script>
+</body>
+</html>

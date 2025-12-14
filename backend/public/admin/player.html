@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>VisioCast – Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #player-container {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      cursor: none;
+    }
+
+    #player-container img,
+    #player-container video,
+    #player-container iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(0.96);
+      transform-origin: center center;
+      background: #000;
+    }
+
+    #progress-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      width: 92%;
+      height: 4px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity .25s ease;
+      pointer-events: none;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: rgba(34,197,94,0.95);
+    }
+  </style>
+</head>
+
+<body class="bg-black text-white">
+  <div id="player-root" class="w-screen h-screen flex flex-col bg-black">
+
+    <div id="top-bar"
+         class="h-10 px-4 flex items-center justify-between bg-black/70 text-xs text-slate-200 border-b border-white/10 transition-opacity duration-300">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold">VisioCast Player</span>
+        <span id="top-ekran" class="text-slate-400"></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="top-status" class="text-emerald-400">Učitavam playlistu...</span>
+        <span id="top-clock" class="text-slate-400"></span>
+      </div>
+    </div>
+
+    <div id="player-container" class="relative flex-1 bg-black select-none">
+      <div id="ad-inner" class="w-full h-full flex items-center justify-center bg-black">
+        <span class="text-slate-500 text-xs">Učitavanje...</span>
+      </div>
+
+      <div id="fade-layer"
+           class="pointer-events-none absolute inset-0 bg-black opacity-0 transition-opacity duration-500"></div>
+
+      <div id="loading-indicator"
+           class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200">
+        <div class="h-10 w-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+      </div>
+
+      <div id="progress-wrap">
+        <div id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------------------------------------
+    // API_BASE:
+    // - Ako otvaraš preko backend hosta (npr. http://localhost:5000/...), onda window.location.origin je tačan.
+    // - Ako otvaraš kao file:///... onda nema origin za API -> fallback na localhost:5000.
+    // - Možeš i ručno dodati ?api=http://neki-host:5000
+    // ------------------------------------------------------------
+    const qs = new URLSearchParams(window.location.search);
+    const apiOverride = qs.get("api");
+
+    const API_BASE = apiOverride
+      ? apiOverride.replace(/\/$/, "")
+      : (window.location.protocol === "http:" || window.location.protocol === "https:")
+        ? window.location.origin
+        : "http://localhost:5000";
+
+    const ekranId = qs.get("ekranId") || null;
+    const poslovnicaId = qs.get("poslovnica") || qs.get("poslovnicaId") || null;
+
+    let PLAYLIST_URL = null;
+
+    // OVO JE TVOJ REALNI ENDPOINT (kao u curl-u)
+    if (ekranId) {
+      PLAYLIST_URL = `${API_BASE}/api/player?ekranId=${encodeURIComponent(ekranId)}`;
+    } else if (poslovnicaId) {
+      PLAYLIST_URL = `${API_BASE}/api/player?poslovnicaId=${encodeURIComponent(poslovnicaId)}`;
+    } else {
+      document.body.innerHTML = "<h1 style='color:white'>Nedostaje ekranId ili poslovnicaId.</h1>";
+      throw new Error("Missing ekranId/poslovnicaId");
+    }
+
+    document.getElementById("top-ekran").textContent =
+      ekranId ? `Ekran: ${ekranId}` : `Poslovnica: ${poslovnicaId}`;
+
+    const topStatus  = document.getElementById("top-status");
+    const topClock   = document.getElementById("top-clock");
+    const adInner    = document.getElementById("ad-inner");
+    const fadeLayer  = document.getElementById("fade-layer");
+    const loadingEl  = document.getElementById("loading-indicator");
+    const topBar     = document.getElementById("top-bar");
+    const playerContainer = document.getElementById("player-container");
+
+    const progressWrap = document.getElementById("progress-wrap");
+    const progressBar  = document.getElementById("progress-bar");
+
+    let playlist = [];
+    let currentIndex = -1;
+    let playlistRefreshInterval = null;
+
+    // ----- AUTO HIDE UI -----
+    let uiTimer = null;
+    function showUiTemporarily() {
+      playerContainer.style.cursor = "default";
+      progressWrap.style.opacity = 1;
+
+      clearTimeout(uiTimer);
+      uiTimer = setTimeout(() => {
+        progressWrap.style.opacity = 0;
+        playerContainer.style.cursor = "none";
+      }, 2000);
+    }
+    playerContainer.addEventListener("mousemove", showUiTemporarily);
+    playerContainer.addEventListener("touchstart", showUiTemporarily);
+
+    // Sat
+    function startClock() {
+      function tick() {
+        const d = new Date();
+        topClock.textContent =
+          `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      }
+      tick();
+      setInterval(tick, 60_000);
+    }
+
+    function normalizeMediaUrl(url) {
+      if (!url) return null;
+      if (url.startsWith("http")) return url;
+      if (!url.startsWith("/")) url = "/" + url;
+      return API_BASE + url; // /media/... ide preko istog servera
+    }
+
+    function fadeToBlack(cb) {
+      fadeLayer.style.opacity = 1;
+      setTimeout(cb, 500);
+    }
+    function fadeFromBlack() { fadeLayer.style.opacity = 0; }
+
+    function showLoading(state) {
+      loadingEl.style.opacity = state ? 1 : 0;
+    }
+
+    function hasAnyVideo(list) {
+      return Array.isArray(list) && list.some(x => String(x.tip || "").toLowerCase() === "video");
+    }
+    function onlyVideos(list) {
+      return (list || []).filter(x => String(x.tip || "").toLowerCase() === "video");
+    }
+    function onlyImages(list) {
+      return (list || []).filter(x => {
+        const t = String(x.tip || "").toLowerCase();
+        return t === "slika" || t === "image" || t === "img";
+      });
+    }
+
+    let imageTimer = null;
+    function clearImageTimer() {
+      if (imageTimer) { clearTimeout(imageTimer); imageTimer = null; }
+    }
+
+    function playNext() {
+      if (!playlist.length) {
+        adInner.innerHTML = `
+          <div class="text-center text-slate-500 text-xs">
+            Nema aktivnih reklama.<br>Provjeri raspored u admin panelu.
+          </div>`;
+        topStatus.textContent = "Nema aktivnih reklama.";
+        progressBar.style.width = "0%";
+        return;
+      }
+
+      const useVideoMode = hasAnyVideo(playlist);
+      const listToUse = useVideoMode ? onlyVideos(playlist) : onlyImages(playlist);
+
+      currentIndex = (currentIndex + 1) % listToUse.length;
+      const ad = listToUse[currentIndex];
+
+      topStatus.textContent = useVideoMode
+        ? `VIDEO: ${currentIndex + 1}/${listToUse.length} – ${ad.naziv || ""}`
+        : `SLIKE: ${currentIndex + 1}/${listToUse.length} – ${ad.naziv || ""}`;
+
+      fadeToBlack(() => {
+        renderAd(ad, useVideoMode);
+        fadeFromBlack();
+      });
+    }
+
+    function renderAd(ad, useVideoMode) {
+      adInner.innerHTML = "";
+      showLoading(true);
+      clearImageTimer();
+      progressBar.style.width = "0%";
+
+      const url = normalizeMediaUrl(ad.fajlUrl);
+
+      // SLIKE
+      if (!useVideoMode) {
+        const img = document.createElement("img");
+        img.src = url;
+        adInner.appendChild(img);
+        showLoading(false);
+
+        const durationMs = (ad.trajanjeSekundi || 12) * 1000;
+        const start = performance.now();
+
+        const tick = () => {
+          const p = Math.min(1, (performance.now() - start) / durationMs);
+          progressBar.style.width = (p * 100).toFixed(1) + "%";
+          if (p < 1) imageTimer = setTimeout(tick, 100);
+        };
+        tick();
+
+        imageTimer = setTimeout(playNext, durationMs);
+        return;
+      }
+
+      // VIDEO
+      const video = document.createElement("video");
+      video.src = url;
+      video.autoplay = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.controls = false;
+      video.loop = true;
+      video.preload = "auto";
+      video.load();
+
+      video.oncanplay = async () => {
+        showLoading(false);
+        try { await video.play(); } catch (e) {}
+      };
+
+      video.onerror = () => location.reload();
+
+      video.addEventListener("timeupdate", () => {
+        if (!video.duration || !isFinite(video.duration)) return;
+        const p = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = p.toFixed(1) + "%";
+      });
+
+      let lastTime = 0;
+      let lastTick = Date.now();
+      const wd = setInterval(() => {
+        if (!document.body.contains(video)) { clearInterval(wd); return; }
+        if (video.paused) return;
+
+        if (video.currentTime !== lastTime) {
+          lastTime = video.currentTime;
+          lastTick = Date.now();
+        } else if (Date.now() - lastTick > 8000) {
+          location.reload();
+        }
+      }, 2000);
+
+      adInner.appendChild(video);
+    }
+
+    async function loadPlaylist({ silent = false } = {}) {
+      try {
+        const res = await fetch(PLAYLIST_URL, { cache: "no-store" });
+        const data = await res.json();
+
+        // Tvoj backend vraća: { ok:true, ... , reklame:[...] }
+        playlist = data.reklame || [];
+        currentIndex = -1;
+
+        if (!silent) topStatus.textContent = "Playlist učitana.";
+        playNext();
+      } catch (e) {
+        console.error(e);
+        topStatus.textContent = "Greška pri učitavanju playliste.";
+      }
+    }
+
+    function startPlaylistRefresh() {
+      if (playlistRefreshInterval) clearInterval(playlistRefreshInterval);
+      playlistRefreshInterval = setInterval(() => loadPlaylist({ silent: true }), 60_000);
+    }
+
+    // Fullscreen
+    let autoFsDone = false;
+    async function ensureFullscreen() {
+      if (document.fullscreenElement) return;
+      try { await playerContainer.requestFullscreen(); } catch (e) {}
+    }
+
+    setTimeout(async () => {
+      if (autoFsDone) return;
+      autoFsDone = true;
+      await ensureFullscreen();
+    }, 300);
+
+    playerContainer.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) await playerContainer.requestFullscreen();
+        else await document.exitFullscreen();
+      } catch {}
+
+      const v = adInner.querySelector("video");
+      if (v) { try { await v.play(); } catch {} }
+
+      showUiTemporarily();
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      const isFullscreen = !!document.fullscreenElement;
+      topBar.style.opacity = isFullscreen ? 0 : 1;
+      if (isFullscreen) {
+        playerContainer.style.cursor = "none";
+        progressWrap.style.opacity = 0;
+      }
+    });
+
+    // Init
+    startClock();
+    loadPlaylist();
+    startPlaylistRefresh();
+  </script>
+</body>
+</html>
