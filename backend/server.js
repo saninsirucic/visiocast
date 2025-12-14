@@ -2,10 +2,10 @@
 
 const path = require("path");
 
-// ⬇️ UČITAVA backend/.env (POUZDANO)
-require("dotenv").config({
-  path: path.join(__dirname, ".env"),
-});
+// ✅ .env učitavaš SAMO lokalno (Render koristi Environment Variables)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
 const express = require("express");
 const cors = require("cors");
@@ -317,7 +317,6 @@ app.delete("/api/komitenti/:id", async (req, res) => {
       return res.status(404).json({ message: "Komitent nije pronađen" });
     }
 
-    // ⚠️ Za sada: kaskadno brišemo samo iz ARRAY dijela (poslovnice/ekrani su još demo)
     const posIds = poslovnice
       .filter((p) => p.komitentId === id)
       .map((p) => p.id);
@@ -447,7 +446,9 @@ app.get("/api/player", (req, res) => {
 // ------------------------
 (async () => {
   try {
-    await connectDB();
+    const ok = await connectDB();
+    if (!ok) throw new Error("MongoDB nije spojen (provjeri MONGO_URI na Renderu).");
+
     await ensureKomitentiSeeded();
 
     app.listen(PORT, "0.0.0.0", () => {
