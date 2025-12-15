@@ -113,6 +113,18 @@
     ).replace(/\/$/, "");
 
     // ============================================================
+    // API FETCH – automatski dodaje token (ako zatreba)
+    // ============================================================
+    function apiFetch(url, options = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { ...(options.headers || {}) };
+
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      return fetch(url, { ...options, headers });
+    }
+
+    // ============================================================
     // PARAMS
     // ============================================================
     const ekranId = qs.get("ekranId") || null;

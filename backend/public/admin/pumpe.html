@@ -214,6 +214,19 @@
     const API_BASE = window.API_BASE;
 
     /* ===============================
+       API FETCH – automatski dodaje token
+       =============================== */
+    function apiFetch(url, options = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { ...(options.headers || {}) };
+
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      return fetch(url, { ...options, headers });
+    }
+
+
+    /* ===============================
        AUTH – JWT iz localStorage
        (ako imaš drugi key, dodaj ga ovdje)
        =============================== */
@@ -233,7 +246,8 @@
     }
 
     async function fetchJson(path) {
-      const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
+      const res = await apiFetch(`${API_BASE}${path}`);
+
       if (res.status === 401 || res.status === 403) {
         throw new Error("Nema pristupa (JWT) – uloguj se ponovo.");
       }

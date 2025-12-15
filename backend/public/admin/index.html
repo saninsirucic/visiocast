@@ -391,14 +391,26 @@
 
   <!-- JS LOGIKA -->
   <script>
-// Baza za API – automatski (local / production)
-window.API_BASE =
-  window.API_BASE ||
-  ((location.hostname === "localhost" || location.hostname === "127.0.0.1")
-    ? "http://localhost:4000"
-    : location.origin);
+    // Baza za API – automatski (local / production)
+    window.API_BASE =
+      window.API_BASE ||
+      ((location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? "http://localhost:4000"
+        : location.origin);
 
-const API_BASE = window.API_BASE;
+    const API_BASE = window.API_BASE;
+
+    // ---------------------------------
+    // API FETCH – automatski dodaje token
+    // ---------------------------------
+    function apiFetch(url, options = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { ...(options.headers || {}) };
+
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      return fetch(url, { ...options, headers });
+    }
 
     // helper: pretvori r.fajlUrl u punu putanju (backend /media)
     function resolveFileUrl(rawUrl) {
@@ -662,9 +674,9 @@ const API_BASE = window.API_BASE;
 
       try {
         const [reklRes, posRes, ekrRes] = await Promise.all([
-          fetch(`${API_BASE}/api/reklame`),
-          fetch(`${API_BASE}/api/poslovnice`),
-          fetch(`${API_BASE}/api/ekrani`)
+          apiFetch(`${API_BASE}/api/reklame`),
+          apiFetch(`${API_BASE}/api/poslovnice`),
+          apiFetch(`${API_BASE}/api/ekrani`)
         ]);
 
         const [reklData, posData, ekrData] = await Promise.all([
@@ -728,7 +740,8 @@ const API_BASE = window.API_BASE;
           ? `${API_BASE}/api/reklame?${params.toString()}`
           : `${API_BASE}/api/reklame`;
 
-        const res = await fetch(url);
+        const res = await apiFetch(url);
+
         if (!res.ok) {
           throw new Error("Greška pri čitanju API-ja");
         }
@@ -974,7 +987,7 @@ const API_BASE = window.API_BASE;
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/reklame/${id}`, {
+        const res = await apiFetch(`${API_BASE}/api/reklame/${id}`, {
           method: "DELETE"
         });
 
@@ -992,7 +1005,7 @@ const API_BASE = window.API_BASE;
 
     async function aktivirajReklamu(id) {
       try {
-        const res = await fetch(`${API_BASE}/api/reklame/${id}/aktiviraj`, {
+        const res = await apiFetch(`${API_BASE}/api/reklame/${id}/aktiviraj`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1012,7 +1025,7 @@ const API_BASE = window.API_BASE;
 
     async function pauzirajReklamu(id) {
       try {
-        const res = await fetch(`${API_BASE}/api/reklame/${id}/pauziraj`, {
+        const res = await apiFetch(`${API_BASE}/api/reklame/${id}/pauziraj`, {
           method: "POST"
         });
         if (!res.ok) {
@@ -1031,7 +1044,7 @@ const API_BASE = window.API_BASE;
       if (!confirm("Arhivirati ovu reklamu/kampanju?")) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/reklame/${id}/arhiviraj`, {
+        const res = await apiFetch(`${API_BASE}/api/reklame/${id}/arhiviraj`, {
           method: "POST"
         });
         if (!res.ok) {
@@ -1050,7 +1063,7 @@ const API_BASE = window.API_BASE;
       if (!container) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/poslovnice`);
+        const res = await apiFetch(`${API_BASE}/api/poslovnice`);
         if (!res.ok) throw new Error("API greška");
 
         const data = await res.json();
@@ -1082,7 +1095,7 @@ const API_BASE = window.API_BASE;
       if (!container) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/ekrani`);
+        const res = await apiFetch(`${API_BASE}/api/ekrani`);
         if (!res.ok) throw new Error("API greška");
 
         const data = await res.json();
@@ -1137,7 +1150,7 @@ const API_BASE = window.API_BASE;
       if (filterEkraniLoaded) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/ekrani`);
+        const res = await apiFetch(`${API_BASE}/api/ekrani`);
         if (!res.ok) throw new Error("API greška");
         const data = await res.json();
 
@@ -1163,7 +1176,7 @@ const API_BASE = window.API_BASE;
       if (filterPoslovniceLoaded) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/poslovnice`);
+        const res = await apiFetch(`${API_BASE}/api/poslovnice`);
         if (!res.ok) throw new Error("API greška");
         const data = await res.json();
 
@@ -1255,7 +1268,7 @@ const API_BASE = window.API_BASE;
     // -----------------------
     async function postojeKolizijeZaNovuReklamu(payload) {
       try {
-        const res = await fetch(`${API_BASE}/api/reklame`);
+        const res = await apiFetch(`${API_BASE}/api/reklame`);
         if (!res.ok) return null; // ne možemo provjeriti, nastavi
 
         const existing = await res.json();
@@ -1431,7 +1444,7 @@ const API_BASE = window.API_BASE;
         }
 
         try {
-          const res = await fetch(`${API_BASE}/api/reklame`, {
+          const res = await apiFetch(`${API_BASE}/api/reklame`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -1751,16 +1764,16 @@ const API_BASE = window.API_BASE;
       };
 
       try {
-        const res = await fetch(
-          `${API_BASE}/api/reklame/${reklamaKojaSeUredjuje.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updated),
-          }
-        );
+const res = await apiFetch(
+  `${API_BASE}/api/reklame/${reklamaKojaSeUredjuje.id}`,
+  {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updated),
+  }
+);
 
         if (!res.ok) {
           throw new Error("Greška pri spremanju izmjena");

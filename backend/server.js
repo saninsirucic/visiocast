@@ -10,6 +10,19 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const cors = require("cors");
 
+// ✅ JWT (za admin login)
+const jwt = require("jsonwebtoken");
+
+// ✅ Admin kredencijali (Render: Environment Variables)
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASS = process.env.ADMIN_PASS || "ADMIN_LOZINKA";
+
+// ✅ JWT secret (Render: obavezno postavi JWT_SECRET)
+const JWT_SECRET = process.env.JWT_SECRET || "DEV_ONLY_CHANGE_ME";
+
+// ⬇️ osiguraj da middleware/auth vidi isti secret
+process.env.JWT_SECRET = process.env.JWT_SECRET || JWT_SECRET;
+
 const connectDB = require("./db");
 const authRoutes = require("./routes/auth");
 
@@ -32,6 +45,41 @@ app.use(express.json());
 // AUTH ROUTES (OTVORENO)
 // ------------------------
 app.use("/api/auth", authRoutes);
+
+// ------------------------
+// ✅ LOGIN (OTVORENO) - vraća JWT token za admin panel
+// POST /api/auth/login  { username, password }
+// ------------------------
+app.post("/api/auth/login", (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Fali username/password" });
+    }
+
+    if (
+      String(username) !== String(ADMIN_USER) ||
+      String(password) !== String(ADMIN_PASS)
+    ) {
+      return res
+        .status(401)
+        .json({ ok: false, message: "Pogrešan username ili lozinka" });
+    }
+
+    const token = jwt.sign(
+      { id: "admin", username: ADMIN_USER, role: "admin" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({ ok: true, token });
+  } catch (e) {
+    return res.status(500).json({ ok: false, message: "Login greška" });
+  }
+});
 
 // ------------------------
 // ADMIN GUARD

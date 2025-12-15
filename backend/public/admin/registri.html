@@ -400,6 +400,18 @@
       : "https://visiocast.onrender.com");
   const API_BASE = window.API_BASE;
 
+  /* ===============================
+     API FETCH – automatski dodaje token
+     =============================== */
+  function apiFetch(url, options = {}) {
+    const token = localStorage.getItem("token");
+    const headers = { ...(options.headers || {}) };
+
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    return fetch(url, { ...options, headers });
+  }
+
   let komitenti = [];
   let poslovnice = [];
   let displeji = [];
@@ -446,12 +458,12 @@
   const statusDot = document.getElementById("status-dot");
   const statusText = document.getElementById("status-text");
 
-
   function setStatus(ok, msg) {
     if (!statusDot || !statusText) return;
     statusDot.className = "h-2 w-2 rounded-full " + (ok ? "bg-emerald-500" : "bg-red-500");
     statusText.textContent = msg;
   }
+
 
   // TAB
   function switchTab(name) {
@@ -484,8 +496,15 @@
     return res.json();
   }
 
+// API
+  async function apiGet(path) {
+    const res = await apiFetch(API_BASE + path);
+    if (!res.ok) throw new Error("Greška GET " + path + " (" + res.status + ")");
+    return res.json();
+  }
+
   async function apiPost(path, payload) {
-    const res = await fetch(API_BASE + path, {
+    const res = await apiFetch(API_BASE + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -497,27 +516,29 @@
     return res.json();
   }
 
-  async function apiPut(path, payload) {
-    const res = await fetch(API_BASE + path, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error("Greška PUT " + path + " " + res.status + ": " + txt);
-    }
-    return res.json();
-  }
 
-  async function apiDelete(path) {
-    const res = await fetch(API_BASE + path, { method: "DELETE" });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error("Greška DELETE " + path + " " + res.status + ": " + txt);
-    }
-    return res.json().catch(() => ({}));
+async function apiPut(path, payload) {
+  const res = await apiFetch(API_BASE + path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error("Greška PUT " + path + " " + res.status + ": " + txt);
   }
+  return res.json();
+}
+
+async function apiDelete(path) {
+  const res = await apiFetch(API_BASE + path, { method: "DELETE" });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error("Greška DELETE " + path + " " + res.status + ": " + txt);
+  }
+  return res.json().catch(() => ({}));
+}
+
 
   // RENDER
   function renderKomitenti() {

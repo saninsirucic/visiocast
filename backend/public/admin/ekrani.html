@@ -236,6 +236,20 @@
 
     const API_BASE = window.API_BASE;
 
+    // ===============================
+    // API FETCH – automatski dodaje token
+    // ===============================
+    function apiFetch(url, options = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { ...(options.headers || {}) };
+
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      return apiFetch(url, { ...options, headers });
+
+    }
+
+
     // JWT helper (ako backend traži Bearer token)
     function getToken() {
       return (
@@ -454,7 +468,7 @@
     window.closeDeviceModal = closeDeviceModal;
 
     async function fetchJson(path) {
-      const res = await fetch(`${API_BASE}${path}`, { headers: getAuthHeaders() });
+      const res = await apiFetch(`${API_BASE}${path}`);
 
       // ako je auth uključen, dobit ćeš 401/403 – neka poruka bude jasna
       if (res.status === 401 || res.status === 403) {

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <title>VisioCast – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-6">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold tracking-tight">VisioCast</h1>
+      <p class="text-sm text-slate-500 mt-1">Prijava u admin panel</p>
+    </div>
+
+    <div id="msg" class="hidden mb-4 rounded-lg border px-4 py-3 text-sm"></div>
+
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+        <input id="username" type="text" autocomplete="username"
+               class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/20"
+               placeholder="admin" value="admin" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+        <input id="password" type="password" autocomplete="current-password"
+               class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/20"
+               placeholder="••••••••" />
+      </div>
+
+      <button id="btn" type="submit"
+              class="w-full rounded-xl bg-slate-900 text-white py-3 font-semibold hover:bg-slate-800 transition">
+        Prijavi se
+      </button>
+
+      <p class="text-xs text-slate-500 text-center">
+        Ako već imaš token, prebacit će te direktno u admin.
+      </p>
+    </form>
+  </div>
+
+  <script>
+    /* ===============================
+       API BASE – automatski (local / production)
+       =============================== */
+    window.API_BASE =
+      window.API_BASE ||
+      ((location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? "http://localhost:5000"
+        : location.origin);
+
+    const API_BASE = window.API_BASE;
+
+    const msg = document.getElementById("msg");
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("btn");
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+
+    function showMsg(text, type) {
+      msg.classList.remove("hidden");
+      msg.textContent = text;
+
+      msg.className = "mb-4 rounded-lg border px-4 py-3 text-sm";
+      if (type === "ok") {
+        msg.classList.add("border-emerald-200", "bg-emerald-50", "text-emerald-800");
+      } else {
+        msg.classList.add("border-rose-200", "bg-rose-50", "text-rose-800");
+      }
+    }
+
+    // Ako token postoji, pokušaj odmah ući u admin
+    const existing = localStorage.getItem("token");
+    if (existing) {
+      window.location.href = "/admin/index.html";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.classList.add("hidden");
+
+      btn.disabled = true;
+      btn.textContent = "Prijavljujem...";
+
+      try {
+        const r = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: username.value.trim(),
+            password: password.value
+          })
+        });
+
+        const data = await r.json().catch(() => ({}));
+
+        if (!r.ok || !data.token) {
+          showMsg(data.message || "Login nije uspio.", "err");
+          btn.disabled = false;
+          btn.textContent = "Prijavi se";
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        showMsg("Uspješna prijava. Prebacujem te u admin...", "ok");
+
+        setTimeout(() => {
+          window.location.href = "/admin/index.html";
+        }, 400);
+
+      } catch (err) {
+        showMsg("Greška mreže ili servera. Pokušaj opet.", "err");
+        btn.disabled = false;
+        btn.textContent = "Prijavi se";
+      }
+    });
+  </script>
+</body>
+</html>
