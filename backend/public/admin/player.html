@@ -90,34 +90,42 @@
     </div>
   </div>
 
-  <script>
-    // ------------------------------------------------------------
-    // API_BASE:
-    // - Ako otvaraš preko backend hosta (npr. http://localhost:5000/...), onda window.location.origin je tačan.
-    // - Ako otvaraš kao file:///... onda nema origin za API -> fallback na localhost:5000.
-    // - Možeš i ručno dodati ?api=http://neki-host:5000
-    // ------------------------------------------------------------
+   <script>
+    // ============================================================
+    // API_BASE (robust):
+    // 1) ?api=http://host:port
+    // 2) window.API_BASE (ako ga admin stranice već postave)
+    // 3) ako je http/https: origin
+    // 4) ako je file:// fallback na localhost:5000
+    // ============================================================
     const qs = new URLSearchParams(window.location.search);
     const apiOverride = qs.get("api");
 
-    const API_BASE = apiOverride
-      ? apiOverride.replace(/\/$/, "")
-      : (window.location.protocol === "http:" || window.location.protocol === "https:")
-        ? window.location.origin
-        : "http://localhost:5000";
+    const FALLBACK_LOCAL_API = "http://localhost:5000";
 
+    const API_BASE = (apiOverride
+      ? apiOverride
+      : (window.API_BASE || (
+          (location.protocol === "http:" || location.protocol === "https:")
+            ? location.origin
+            : FALLBACK_LOCAL_API
+        ))
+    ).replace(/\/$/, "");
+
+    // ============================================================
+    // PARAMS
+    // ============================================================
     const ekranId = qs.get("ekranId") || null;
     const poslovnicaId = qs.get("poslovnica") || qs.get("poslovnicaId") || null;
 
     let PLAYLIST_URL = null;
 
-    // OVO JE TVOJ REALNI ENDPOINT (kao u curl-u)
     if (ekranId) {
       PLAYLIST_URL = `${API_BASE}/api/player?ekranId=${encodeURIComponent(ekranId)}`;
     } else if (poslovnicaId) {
       PLAYLIST_URL = `${API_BASE}/api/player?poslovnicaId=${encodeURIComponent(poslovnicaId)}`;
     } else {
-      document.body.innerHTML = "<h1 style='color:white'>Nedostaje ekranId ili poslovnicaId.</h1>";
+      document.body.innerHTML = "<h1 style='color:white;padding:20px'>Nedostaje ekranId ili poslovnicaId.</h1>";
       throw new Error("Missing ekranId/poslovnicaId");
     }
 
@@ -138,6 +146,24 @@
     let playlist = [];
     let currentIndex = -1;
     let playlistRefreshInterval = null;
+
+    // ============================================================
+    // AUTH (ako je /api/player zaštićen)
+    // ============================================================
+    function getToken() {
+      return (
+        localStorage.getItem("token") ||
+        localStorage.getItem("jwt") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("visiocast_token") ||
+        ""
+      );
+    }
+
+    function authHeaders() {
+      const t = getToken();
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    }
 
     // ----- AUTO HIDE UI -----
     let uiTimer = null;
@@ -165,11 +191,14 @@
       setInterval(tick, 60_000);
     }
 
+    // resolve fajlUrl -> apsolutno na API_BASE
     function normalizeMediaUrl(url) {
       if (!url) return null;
-      if (url.startsWith("http")) return url;
-      if (!url.startsWith("/")) url = "/" + url;
-      return API_BASE + url; // /media/... ide preko istog servera
+      const u = String(url).trim();
+      if (!u) return null;
+      if (u.startsWith("http://") || u.startsWith("https://")) return u;
+      if (u.startsWith("/")) return API_BASE + u;       // npr /media/x.mp4
+      return API_BASE + "/media/" + u;                  // npr "x.mp4"
     }
 
     function fadeToBlack(cb) {
@@ -182,25 +211,34 @@
       loadingEl.style.opacity = state ? 1 : 0;
     }
 
+    function tipLower(x) {
+      return String(x || "").toLowerCase();
+    }
+
     function hasAnyVideo(list) {
-      return Array.isArray(list) && list.some(x => String(x.tip || "").toLowerCase() === "video");
+      return Array.isArray(list) && list.some(x => tipLower(x.tip) === "video");
     }
     function onlyVideos(list) {
-      return (list || []).filter(x => String(x.tip || "").toLowerCase() === "video");
+      return (list || []).filter(x => tipLower(x.tip) === "video");
     }
     function onlyImages(list) {
       return (list || []).filter(x => {
-        const t = String(x.tip || "").toLowerCase();
+        const t = tipLower(x.tip);
         return t === "slika" || t === "image" || t === "img";
       });
     }
 
     let imageTimer = null;
-    function clearImageTimer() {
+    let videoTimer = null;
+
+    function clearTimers() {
       if (imageTimer) { clearTimeout(imageTimer); imageTimer = null; }
+      if (videoTimer) { clearTimeout(videoTimer); videoTimer = null; }
     }
 
     function playNext() {
+      clearTimers();
+
       if (!playlist.length) {
         adInner.innerHTML = `
           <div class="text-center text-slate-500 text-xs">
@@ -213,6 +251,11 @@
 
       const useVideoMode = hasAnyVideo(playlist);
       const listToUse = useVideoMode ? onlyVideos(playlist) : onlyImages(playlist);
+
+      if (!listToUse.length) {
+        topStatus.textContent = "Nema medija za prikaz.";
+        return;
+      }
 
       currentIndex = (currentIndex + 1) % listToUse.length;
       const ad = listToUse[currentIndex];
@@ -230,21 +273,28 @@
     function renderAd(ad, useVideoMode) {
       adInner.innerHTML = "";
       showLoading(true);
-      clearImageTimer();
       progressBar.style.width = "0%";
 
       const url = normalizeMediaUrl(ad.fajlUrl);
 
-      // SLIKE
+      // fallback trajanje
+      const durationSec = Number(ad.trajanjeSekundi || 12);
+      const durationMs = Math.max(3, durationSec) * 1000;
+
+      // ================= SLIKE =================
       if (!useVideoMode) {
         const img = document.createElement("img");
         img.src = url;
+        img.onload = () => showLoading(false);
+        img.onerror = () => {
+          showLoading(false);
+          topStatus.textContent = "Greška slika – reload.";
+          setTimeout(() => location.reload(), 1500);
+        };
+
         adInner.appendChild(img);
-        showLoading(false);
 
-        const durationMs = (ad.trajanjeSekundi || 12) * 1000;
         const start = performance.now();
-
         const tick = () => {
           const p = Math.min(1, (performance.now() - start) / durationMs);
           progressBar.style.width = (p * 100).toFixed(1) + "%";
@@ -256,30 +306,40 @@
         return;
       }
 
-      // VIDEO
+      // ================= VIDEO =================
       const video = document.createElement("video");
       video.src = url;
       video.autoplay = true;
       video.muted = true;
       video.playsInline = true;
       video.controls = false;
-      video.loop = true;
+      video.loop = false;          // <<< BITNO: ne loop, jer rotiramo!
       video.preload = "auto";
-      video.load();
 
       video.oncanplay = async () => {
         showLoading(false);
         try { await video.play(); } catch (e) {}
       };
 
-      video.onerror = () => location.reload();
+      video.onerror = () => {
+        showLoading(false);
+        topStatus.textContent = "Greška video – reload.";
+        setTimeout(() => location.reload(), 1500);
+      };
 
-      video.addEventListener("timeupdate", () => {
-        if (!video.duration || !isFinite(video.duration)) return;
-        const p = (video.currentTime / video.duration) * 100;
-        progressBar.style.width = p.toFixed(1) + "%";
-      });
+      // progress po vremenu koje MI zadamo (trajanjeSekundi)
+      const start = performance.now();
+      const tick = () => {
+        const p = Math.min(1, (performance.now() - start) / durationMs);
+        progressBar.style.width = (p * 100).toFixed(1) + "%";
+        if (p < 1) videoTimer = setTimeout(tick, 100);
+      };
+      tick();
 
+      // nakon trajanjaSekundi pređi na sljedeći
+      videoTimer = setTimeout(playNext, durationMs);
+
+      // watchdog: ako video “zamrzne” – reload
       let lastTime = 0;
       let lastTick = Date.now();
       const wd = setInterval(() => {
@@ -299,11 +359,20 @@
 
     async function loadPlaylist({ silent = false } = {}) {
       try {
-        const res = await fetch(PLAYLIST_URL, { cache: "no-store" });
+        const res = await fetch(PLAYLIST_URL, {
+          cache: "no-store",
+          headers: authHeaders()
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          topStatus.textContent = "Nema pristupa (JWT) – uloguj se.";
+          return;
+        }
+
         const data = await res.json();
 
-        // Tvoj backend vraća: { ok:true, ... , reklame:[...] }
-        playlist = data.reklame || [];
+        // backend: { ok:true, poslovnicaId, reklame:[...] }
+        playlist = Array.isArray(data.reklame) ? data.reklame : [];
         currentIndex = -1;
 
         if (!silent) topStatus.textContent = "Playlist učitana.";

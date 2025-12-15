@@ -391,9 +391,14 @@
 
   <!-- JS LOGIKA -->
   <script>
-    // Baza za API – backend na http://localhost:4000
-    window.API_BASE = window.API_BASE || "http://localhost:4000";
-    const API_BASE = window.API_BASE;
+// Baza za API – automatski (local / production)
+window.API_BASE =
+  window.API_BASE ||
+  ((location.hostname === "localhost" || location.hostname === "127.0.0.1")
+    ? "http://localhost:4000"
+    : location.origin);
+
+const API_BASE = window.API_BASE;
 
     // helper: pretvori r.fajlUrl u punu putanju (backend /media)
     function resolveFileUrl(rawUrl) {

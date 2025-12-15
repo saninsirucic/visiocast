@@ -64,7 +64,7 @@
         </div>
         <div class="flex items-center gap-2 text-xs text-slate-500">
           <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-          <span>Podaci dolaze sa API-ja (port 4000)</span>
+          <span>Podaci dolaze sa API-ja</span>
         </div>
       </header>
 
@@ -176,7 +176,7 @@
               </p>
             </div>
             <div class="text-xs text-slate-500">
-              <span id="label-count">0 pumpi</span>
+              <span id="label-count">Učitavanje...</span>
             </div>
           </div>
 
@@ -202,11 +202,46 @@
 
   <!-- JS LOGIKA -->
   <script>
-    // API base – usklađeno sa ostalim stranicama
-    window.API_BASE = window.API_BASE || "http://localhost:4000";
+    /* ===============================
+       API BASE – auto local/production
+       =============================== */
+    window.API_BASE =
+      window.API_BASE ||
+      ((location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? "http://localhost:4000"
+        : location.origin);
+
     const API_BASE = window.API_BASE;
 
-    // Globalni niz pumpi (view-model, ne raw iz backenda)
+    /* ===============================
+       AUTH – JWT iz localStorage
+       (ako imaš drugi key, dodaj ga ovdje)
+       =============================== */
+    function getToken() {
+      return (
+        localStorage.getItem("token") ||
+        localStorage.getItem("jwt") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("visiocast_token") ||
+        ""
+      );
+    }
+
+    function authHeaders() {
+      const t = getToken();
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    }
+
+    async function fetchJson(path) {
+      const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Nema pristupa (JWT) – uloguj se ponovo.");
+      }
+      if (!res.ok) throw new Error("Greška API: " + path);
+      return res.json();
+    }
+
+    // Globalni niz pumpi (view-model)
     // { id, naziv, lokacija, status: "online"/"offline", aktivneReklame: [] }
     let pumpe = [];
 
@@ -241,7 +276,7 @@
       `;
     }
 
-    // Popuni dropdown reklama iz podataka
+    // Popuni dropdown reklama iz podataka (resetuje sve osim prve opcije)
     function populateReklamaFilter() {
       while (filterReklama.options.length > 1) {
         filterReklama.remove(1);
@@ -250,9 +285,7 @@
       const set = new Set();
       pumpe.forEach(p => {
         (p.aktivneReklame || []).forEach(naziv => {
-          if (naziv && naziv.trim() !== "") {
-            set.add(naziv.trim());
-          }
+          if (naziv && naziv.trim() !== "") set.add(naziv.trim());
         });
       });
 
@@ -273,15 +306,14 @@
       let filtered = pumpe.filter(p => {
         // pretraga
         if (q) {
-          const combined =
-            ((p.naziv || "") + " " + (p.lokacija || "")).toLowerCase();
+          const combined = ((p.naziv || "") + " " + (p.lokacija || "")).toLowerCase();
           if (!combined.includes(q)) return false;
         }
 
-        // status (online/offline)
+        // status
         if (statusVal !== "all" && p.status !== statusVal) return false;
 
-        // reklama (pumpa ima listu aktivnih reklama)
+        // reklama
         if (reklamaVal !== "all") {
           const arr = p.aktivneReklame || [];
           if (!arr.includes(reklamaVal)) return false;
@@ -302,7 +334,7 @@
         `;
         labelCount.textContent = "0 pumpi";
       } else {
-        // sort – online (aktivne) prvo
+        // sort – online prvo, pa naziv
         filtered.sort((a, b) => {
           if (a.status === b.status) {
             return (a.naziv || "").localeCompare(b.naziv || "", "bs", { sensitivity: "base" });
@@ -314,9 +346,10 @@
           const tr = document.createElement("tr");
           tr.className = "hover:bg-slate-50/80";
 
-          const reklameText = (p.aktivneReklame && p.aktivneReklame.length)
-            ? p.aktivneReklame.join(", ")
-            : "—";
+          const reklameText =
+            (p.aktivneReklame && p.aktivneReklame.length)
+              ? p.aktivneReklame.join(", ")
+              : "—";
 
           tr.innerHTML = `
             <td class="px-4 py-2 align-middle">
@@ -342,11 +375,10 @@
           tbody.appendChild(tr);
         }
 
-        labelCount.textContent =
-          filtered.length + (filtered.length === 1 ? " pumpa" : " pumpi");
+        labelCount.textContent = filtered.length + (filtered.length === 1 ? " pumpa" : " pumpi");
       }
 
-      // stat kartice (uvijek po punoj listi "pumpe")
+      // stat kartice (uvijek po punoj listi)
       const total = pumpe.length;
       const online = pumpe.filter(p => p.status === "online").length;
       const offline = pumpe.filter(p => p.status === "offline").length;
@@ -363,57 +395,54 @@
       renderTable();
     }
 
-async function loadPumpe() {
-  try {
-    // 1) Poslovnice
-    const resP = await fetch(`${API_BASE}/api/poslovnice`);
-    if (!resP.ok) throw new Error("Greška pri čitanju poslovnica");
-    const poslovnice = await resP.json();
+    async function loadPumpe() {
+      try {
+        labelCount.textContent = "Učitavanje...";
 
-    // 2) Reklame (ovdje je ključ)
-    const resR = await fetch(`${API_BASE}/api/reklame`);
-    if (!resR.ok) throw new Error("Greška pri čitanju reklama");
-    const reklame = await resR.json();
+        // 1) Poslovnice
+        const poslovnice = await fetchJson("/api/poslovnice");
 
-    // Gradimo view-model pumpi:
-    // status = "online" ako postoji bar jedna reklama za tu poslovnicu
-    //          čiji je status "Aktivna" (iz /api/reklame)
-    pumpe = Array.isArray(poslovnice)
-      ? poslovnice.map((p) => {
-          // sve reklame koje imaju ovu poslovnicu u poslovniceIds
-          const reklameZaP = reklame.filter((r) => {
-            const listaPoslovnica = Array.isArray(r.poslovniceIds)
-              ? r.poslovniceIds
-              : [];
-            const isForThis =
-              listaPoslovnica.includes(p.id);
+        // 2) Reklame
+        const reklame = await fetchJson("/api/reklame");
 
-            const statusStr = String(r.status || "").toLowerCase();
-            const isActive = statusStr.includes("aktiv");
+        // status = online ako postoji bar jedna reklama za tu poslovnicu čiji je status "aktiv"
+        pumpe = Array.isArray(poslovnice)
+          ? poslovnice.map((p) => {
+              const reklameZaP = Array.isArray(reklame)
+                ? reklame.filter((r) => {
+                    const listaPoslovnica = Array.isArray(r.poslovniceIds) ? r.poslovniceIds : [];
+                    const isForThis = listaPoslovnica.includes(p.id);
 
-            return isForThis && isActive;
-          });
+                    const statusStr = String(r.status || "").toLowerCase();
+                    const isActive = statusStr.includes("aktiv");
 
-          const aktivneReklame = reklameZaP.map((r) => r.naziv).filter(Boolean);
-          const hasActive = aktivneReklame.length > 0;
+                    return isForThis && isActive;
+                  })
+                : [];
 
-          return {
-            id: p.id,
-            naziv: p.naziv || "Nepoznato ime poslovnice",
-            lokacija: p.grad || p.adresa || "",
-            status: hasActive ? "online" : "offline",
-            aktivneReklame,
-          };
-        })
-      : [];
-  } catch (err) {
-    console.error(err);
-    pumpe = [];
-  }
+              const aktivneReklame = reklameZaP.map((r) => r.naziv).filter(Boolean);
+              const hasActive = aktivneReklame.length > 0;
 
-  populateReklamaFilter();
-  renderTable();
-}
+              return {
+                id: p.id,
+                naziv: p.naziv || "Nepoznato ime poslovnice",
+                lokacija: p.grad || p.adresa || "",
+                status: hasActive ? "online" : "offline",
+                aktivneReklame,
+              };
+            })
+          : [];
+
+        populateReklamaFilter();
+        renderTable();
+      } catch (err) {
+        console.error(err);
+        pumpe = [];
+        populateReklamaFilter();
+        renderTable();
+        labelCount.textContent = "0 pumpi";
+      }
+    }
 
     // Eventi
     filterSearch.addEventListener("input", renderTable);
@@ -421,7 +450,7 @@ async function loadPumpe() {
     filterReklama.addEventListener("change", renderTable);
     btnClear.addEventListener("click", resetFilters);
 
-    // Init – prvo povuci sa backenda, pa prikaži
+    // Init
     loadPumpe();
   </script>
 </body>
