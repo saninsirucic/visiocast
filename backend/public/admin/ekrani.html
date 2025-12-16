@@ -237,7 +237,7 @@
     const API_BASE = window.API_BASE;
 
     // ===============================
-    // API FETCH – automatski dodaje token
+    // API FETCH – automatski dodaje token (FIX)
     // ===============================
     function apiFetch(url, options = {}) {
       const token = localStorage.getItem("token");
@@ -245,10 +245,9 @@
 
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      return apiFetch(url, { ...options, headers });
-
+      // ✅ BITNO: ovdje ide fetch(), NE apiFetch()
+      return fetch(url, { ...options, headers });
     }
-
 
     // JWT helper (ako backend traži Bearer token)
     function getToken() {
