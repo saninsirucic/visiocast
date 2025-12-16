@@ -90,7 +90,7 @@
     </div>
   </div>
 
-   <script>
+  <script>
     // ============================================================
     // API_BASE (robust):
     // 1) ?api=http://host:port
@@ -241,11 +241,11 @@
     }
 
     let imageTimer = null;
-    let videoTimer = null;
+    let progressTimer = null;
 
     function clearTimers() {
       if (imageTimer) { clearTimeout(imageTimer); imageTimer = null; }
-      if (videoTimer) { clearTimeout(videoTimer); videoTimer = null; }
+      if (progressTimer) { clearTimeout(progressTimer); progressTimer = null; }
     }
 
     function playNext() {
@@ -289,7 +289,7 @@
 
       const url = normalizeMediaUrl(ad.fajlUrl);
 
-      // fallback trajanje
+      // fallback trajanje za slike
       const durationSec = Number(ad.trajanjeSekundi || 12);
       const durationMs = Math.max(3, durationSec) * 1000;
 
@@ -297,6 +297,7 @@
       if (!useVideoMode) {
         const img = document.createElement("img");
         img.src = url;
+
         img.onload = () => showLoading(false);
         img.onerror = () => {
           showLoading(false);
@@ -310,7 +311,7 @@
         const tick = () => {
           const p = Math.min(1, (performance.now() - start) / durationMs);
           progressBar.style.width = (p * 100).toFixed(1) + "%";
-          if (p < 1) imageTimer = setTimeout(tick, 100);
+          if (p < 1) progressTimer = setTimeout(tick, 100);
         };
         tick();
 
@@ -325,8 +326,33 @@
       video.muted = true;
       video.playsInline = true;
       video.controls = false;
-      video.loop = false;          // <<< BITNO: ne loop, jer rotiramo!
+      video.loop = false;          // BITNO: rotacija ide preko ended
       video.preload = "auto";
+
+      // Kad video stvarno krene i znamo trajanje -> progress ide po stvarnom trajanju
+      const startVideoProgress = () => {
+        const dur = Number(video.duration);
+        if (!isFinite(dur) || dur <= 0) return;
+
+        const start = performance.now();
+        const tick = () => {
+          // Ako se video mijenja/ukloni, prekini
+          if (!document.body.contains(video)) return;
+
+          const cur = Number(video.currentTime || 0);
+          const p = Math.min(1, cur / dur);
+          progressBar.style.width = (p * 100).toFixed(1) + "%";
+
+          // dok ne završi, nastavi
+          if (p < 1) progressTimer = setTimeout(tick, 100);
+        };
+        tick();
+      };
+
+      video.onloadedmetadata = () => {
+        showLoading(false);
+        startVideoProgress();
+      };
 
       video.oncanplay = async () => {
         showLoading(false);
@@ -339,17 +365,11 @@
         setTimeout(() => location.reload(), 1500);
       };
 
-      // progress po vremenu koje MI zadamo (trajanjeSekundi)
-      const start = performance.now();
-      const tick = () => {
-        const p = Math.min(1, (performance.now() - start) / durationMs);
-        progressBar.style.width = (p * 100).toFixed(1) + "%";
-        if (p < 1) videoTimer = setTimeout(tick, 100);
+      // KLJUČNA PROMJENA: ne režemo po trajanjeSekundi — čekamo da završi
+      video.onended = () => {
+        progressBar.style.width = "100%";
+        playNext();
       };
-      tick();
-
-      // nakon trajanjaSekundi pređi na sljedeći
-      videoTimer = setTimeout(playNext, durationMs);
 
       // watchdog: ako video “zamrzne” – reload
       let lastTime = 0;
