@@ -466,6 +466,54 @@ app.get("/api/reklame/:id", (req, res) => {
   res.json({ ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) });
 });
 
+// ✅✅✅ DODATO: AKCIJE ZA REKLAME (da dugmad ne bacaju 404)
+app.post("/api/reklame/:id/aktiviraj", (req, res) => {
+  const item = findReklama(req.params.id);
+  if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
+
+  item.status = "aktivna";
+  item.pauzirana = false;
+
+  res.json({ ok: true, reklama: { ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) } });
+});
+
+app.post("/api/reklame/:id/pauziraj", (req, res) => {
+  const item = findReklama(req.params.id);
+  if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
+
+  item.pauzirana = true;
+
+  res.json({ ok: true, reklama: { ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) } });
+});
+
+app.post("/api/reklame/:id/arhiviraj", (req, res) => {
+  const item = findReklama(req.params.id);
+  if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
+
+  item.status = "arhivirana";
+  item.pauzirana = false;
+
+  res.json({ ok: true, reklama: { ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) } });
+});
+
+app.delete("/api/reklame/:id", (req, res) => {
+  const id = req.params.id;
+  const before = reklame.length;
+
+  reklame = reklame.filter((r) => r.id !== id);
+
+  if (reklame.length === before) {
+    return res.status(404).json({ message: "Reklama nije pronađena" });
+  }
+
+  // očisti reference po poslovnicama (ako čuvaš aktivnaReklamaId)
+  poslovnice = poslovnice.map((p) =>
+    p.aktivnaReklamaId === id ? { ...p, aktivnaReklamaId: null } : p
+  );
+
+  res.json({ ok: true });
+});
+
 // ------------------------
 // API – PLAYER (OTVORENO, za displeje)
 // ------------------------
