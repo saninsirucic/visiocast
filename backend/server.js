@@ -1,5 +1,4 @@
 // server.js
-
 const path = require("path");
 
 // ✅ .env učitavaš SAMO lokalno (Render koristi Environment Variables)
@@ -88,33 +87,22 @@ app.post("/api/auth/login", (req, res) => {
 // - sve ostalo /api/* -> token + admin
 // ------------------------
 function adminOnly(req, res, next) {
-  // auth endpointi slobodni
   if (req.path.startsWith("/api/auth")) return next();
-
-  // player endpointi slobodni (ekrani)
   if (req.path.startsWith("/api/player")) return next();
 
-  // štiti samo /api/*
   if (req.path.startsWith("/api/")) {
     return auth(req, res, () => requireRole("admin")(req, res, next));
   }
 
   return next();
 }
-
 app.use(adminOnly);
 
 // ------------------------
 // SERVIRAJ STATIC (RENDER/PROD SAFE)
 // ------------------------
-// 1) Public root (ako imaš neke fajlove direktno u public)
 app.use(express.static(path.join(__dirname, "public")));
-
-// 2) Admin HTML: /admin/...
 app.use("/admin", express.static(path.join(__dirname, "public", "admin")));
-
-// 3) Media fajlovi: /media/...
-//    ✅ OČEKUJE: backend/public/media  (ne admin/media)
 app.use("/media", express.static(path.join(__dirname, "public", "media")));
 
 // --------------------------------------------------
@@ -127,11 +115,12 @@ function normalizeMediaUrl(fajlUrl) {
   if (str.startsWith("http://") || str.startsWith("https://")) return str;
   if (str.startsWith("/media/")) return str;
 
+  // ako dođe "sanin-test.mp4" -> "/media/sanin-test.mp4"
   return "/media/" + str.replace(/^\/+/, "");
 }
 
 // ------------------------
-// DEMO PODACI (NETAKNUTO za ostalo)
+// DEMO PODACI
 // ------------------------
 
 // ✅ KOMITENTI (demo samo za seed u Mongo)
@@ -152,7 +141,7 @@ const demoKomitenti = [
   },
 ];
 
-// POSLOVNICE (ostaje array kao i prije)
+// POSLOVNICE (array)
 let poslovnice = [
   {
     id: "bp-doboj-jug",
@@ -170,7 +159,7 @@ let poslovnice = [
     grad: "Sarajevo",
     adresa: "Ilidža, Sarajevo",
     status: "online",
-    aktivnaReklamaId: "r2",
+    aktivnaReklamaId: "r1",
   },
   {
     id: "bp-lukavica",
@@ -179,7 +168,7 @@ let poslovnice = [
     grad: "Istočno Sarajevo",
     adresa: "Lukavica",
     status: "online",
-    aktivnaReklamaId: "r2",
+    aktivnaReklamaId: "r1",
   },
   {
     id: "bp-grbavica",
@@ -188,7 +177,7 @@ let poslovnice = [
     grad: "Sarajevo",
     adresa: "Grbavica",
     status: "offline",
-    aktivnaReklamaId: "r1",
+    aktivnaReklamaId: null,
   },
   {
     id: "bp-stup",
@@ -197,11 +186,11 @@ let poslovnice = [
     grad: "Sarajevo",
     adresa: "Stup",
     status: "offline",
-    aktivnaReklamaId: "r3",
+    aktivnaReklamaId: null,
   },
 ];
 
-// EKRANI (ostaje array)
+// EKRANI (array)
 let ekrani = [
   {
     id: "scr-doboj-1",
@@ -245,7 +234,7 @@ let ekrani = [
   },
 ];
 
-// REKLAME (ostaje array)
+// REKLAME (array)
 let reklame = [
   {
     id: "r1",
@@ -256,13 +245,18 @@ let reklame = [
     datumDo: "2025-12-31",
     fajlUrl: "sanin-test.mp4",
     poslovniceIds: ["bp-ilidza", "bp-lukavica"],
+    ekraniIds: [],
     pauzirana: false,
     status: "aktivna",
+    slotovi: [],
   },
 ];
 
 function findReklama(id) {
-  return reklame.find((r) => r.id === id);
+  return reklame.find((r) => String(r.id) === String(id));
+}
+function makeId(prefix = "r") {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
 // ------------------------
@@ -461,12 +455,78 @@ app.get("/api/reklame", (req, res) => {
 });
 
 app.get("/api/reklame/:id", (req, res) => {
-  const item = reklame.find((r) => r.id === req.params.id);
+  const item = findReklama(req.params.id);
   if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
   res.json({ ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) });
 });
 
-// ✅✅✅ DODATO: AKCIJE ZA REKLAME (da dugmad ne bacaju 404)
+// ✅✅✅ OVO JE FALILO: CREATE (Nova reklama)
+app.post("/api/reklame", (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const naziv = String(body.naziv || "").trim();
+    const tip = String(body.tip || "").trim().toLowerCase();
+
+    if (!naziv) return res.status(400).json({ message: "Naziv je obavezan." });
+    if (!tip || !["video", "slika"].includes(tip)) {
+      return res.status(400).json({ message: "Tip mora biti video ili slika." });
+    }
+
+    const fajlUrl = normalizeMediaUrl(body.fajlUrl || "");
+
+    const newItem = {
+      id: makeId("r"),
+      naziv,
+      tip,
+      trajanjeSekundi: Number(body.trajanjeSekundi || 0) || 0,
+      datumOd: body.datumOd || null,
+      datumDo: body.datumDo || null,
+      fajlUrl,
+      poslovniceIds: Array.isArray(body.poslovniceIds) ? body.poslovniceIds : [],
+      ekraniIds: Array.isArray(body.ekraniIds) ? body.ekraniIds : [],
+      slotovi: Array.isArray(body.slotovi) ? body.slotovi : [],
+      pauzirana: false,
+      status: "aktivna",
+    };
+
+    reklame.unshift(newItem);
+
+    res.status(201).json({ ok: true, reklama: newItem });
+  } catch (e) {
+    res.status(500).json({ message: "Greška pri dodavanju reklame." });
+  }
+});
+
+// ✅✅✅ OVO JE FALILO: UPDATE (Uredi reklamu)
+app.put("/api/reklame/:id", (req, res) => {
+  try {
+    const item = findReklama(req.params.id);
+    if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
+
+    const body = req.body || {};
+
+    if (body.naziv !== undefined) item.naziv = String(body.naziv || "").trim();
+    if (body.tip !== undefined) item.tip = String(body.tip || "").trim().toLowerCase();
+
+    if (body.fajlUrl !== undefined) item.fajlUrl = normalizeMediaUrl(body.fajlUrl);
+    if (body.datumOd !== undefined) item.datumOd = body.datumOd || null;
+    if (body.datumDo !== undefined) item.datumDo = body.datumDo || null;
+
+    if (Array.isArray(body.poslovniceIds)) item.poslovniceIds = body.poslovniceIds;
+    if (Array.isArray(body.ekraniIds)) item.ekraniIds = body.ekraniIds;
+    if (Array.isArray(body.slotovi)) item.slotovi = body.slotovi;
+
+    // sigurnost: tip validacija
+    if (item.tip && !["video", "slika"].includes(item.tip)) item.tip = "video";
+
+    res.json({ ok: true, reklama: { ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) } });
+  } catch (e) {
+    res.status(500).json({ message: "Greška pri izmjeni reklame." });
+  }
+});
+
+// ✅✅✅ AKCIJE ZA DUGMAD (tvoj HTML ovo zove)
 app.post("/api/reklame/:id/aktiviraj", (req, res) => {
   const item = findReklama(req.params.id);
   if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
@@ -481,6 +541,7 @@ app.post("/api/reklame/:id/pauziraj", (req, res) => {
   const item = findReklama(req.params.id);
   if (!item) return res.status(404).json({ message: "Reklama nije pronađena" });
 
+  item.status = "pauzirana";
   item.pauzirana = true;
 
   res.json({ ok: true, reklama: { ...item, fajlUrl: normalizeMediaUrl(item.fajlUrl) } });
@@ -506,7 +567,6 @@ app.delete("/api/reklame/:id", (req, res) => {
     return res.status(404).json({ message: "Reklama nije pronađena" });
   }
 
-  // očisti reference po poslovnicama (ako čuvaš aktivnaReklamaId)
   poslovnice = poslovnice.map((p) =>
     p.aktivnaReklamaId === id ? { ...p, aktivnaReklamaId: null } : p
   );
@@ -531,7 +591,7 @@ app.get("/api/player", (req, res) => {
   }
 
   lista = lista
-    .filter((r) => !r.pauzirana && r.status === "aktivna")
+    .filter((r) => !r.pauzirana && String(r.status).toLowerCase().includes("aktiv"))
     .map((r) => ({ ...r, fajlUrl: normalizeMediaUrl(r.fajlUrl) }));
 
   res.json({ ok: true, poslovnicaId: poslovnicaId || null, reklame: lista });
