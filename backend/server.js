@@ -119,6 +119,20 @@ function normalizeMediaUrl(fajlUrl) {
   return "/media/" + str.replace(/^\/+/, "");
 }
 
+// ✅ SAVE (MVP): trenutno držimo podatke u memoriji.
+// Neke verzije frontenda/servera zovu saveData(), pa ovo sprječava 500 greške.
+// Kad kasnije pređeš na DB (Mongo), ovo možeš izbaciti ili zamijeniti pravim upisom.
+function saveData() {
+  // no-op
+}
+
+// Normalizuj shape ekrana da frontend uvijek dobije očekivana polja
+function normalizeEkranShape(e) {
+  const lokacijaTip = (e.lokacijaTip ?? e.tip ?? "").toString();
+  const napomena = (e.napomena ?? "").toString();
+  return { ...e, lokacijaTip, tip: (e.tip ?? lokacijaTip).toString(), napomena };
+}
+
 // ------------------------
 // DEMO PODACI
 // ------------------------
@@ -436,18 +450,15 @@ app.delete("/api/poslovnice/:id", (req, res) => {
 app.get("/api/ekrani", (req, res) => {
   const { poslovnicaId } = req.query;
   if (poslovnicaId) {
-    return res.json(ekrani.filter((e) => e.poslovnicaId === poslovnicaId));
+    return res.json(ekrani.filter((e) => e.poslovnicaId === poslovnicaId).map(normalizeEkranShape));
   }
-  res.json(ekrani);
+  res.json(ekrani.map(normalizeEkranShape));
 });
-
 app.get("/api/ekrani/:id", (req, res) => {
   const item = ekrani.find((e) => e.id === req.params.id);
-
-if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
-  res.json(item);
+  if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
+  res.json(normalizeEkranShape(item));
 });
-
 // ------------------------
 // API – REKLAME (DEMO ARRAY)
 // ------------------------
@@ -557,13 +568,16 @@ app.put("/api/ekrani/:id", auth, (req, res) => {
 
   if (naziv !== undefined) item.naziv = String(naziv).trim();
   if (poslovnicaId !== undefined) item.poslovnicaId = String(poslovnicaId).trim();
-  if (lokacijaTip !== undefined) item.lokacijaTip = String(lokacijaTip).trim();
+  if (lokacijaTip !== undefined) {
+    item.lokacijaTip = String(lokacijaTip).trim();
+    item.tip = item.lokacijaTip; // kompatibilnost sa starim poljem
+  }
   if (napomena !== undefined) item.napomena = String(napomena).trim();
   if (status !== undefined) item.status = String(status).trim();
   if (aktivnaReklamaId !== undefined) item.aktivnaReklamaId = aktivnaReklamaId;
 
   saveData();
-  res.json({ ok: true, ekran: item });
+  res.json({ ok: true, ekran: normalizeEkranShape(item) });
 });
 
 app.delete("/api/ekrani/:id", auth, (req, res) => {
