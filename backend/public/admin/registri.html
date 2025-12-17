@@ -522,6 +522,28 @@
     return res.json();
   }
 
+  // POST sa fallback-om (ako backend nema POST /api/ekrani nego npr. /api/displeji)
+  async function apiPostWithFallback(paths, payload) {
+    let lastErr = null;
+    for (const p of paths) {
+      try {
+        return await apiPost(p, payload);
+      } catch (e) {
+        const msg = String(e || "");
+        lastErr = e;
+        // samo fallback ako je 404 (ruta ne postoji)
+        if (msg.includes(" 404")) {
+          console.warn("POST nije pronađen na", p, "— pokušavam fallback...");
+          continue;
+        }
+        throw e; // ostale greške (401, 400...) ne skrivamo
+      }
+    }
+    throw lastErr || new Error("POST nije uspio ni na jednoj ruti");
+  }
+
+
+
 
 async function apiPut(path, payload) {
   const res = await apiFetch(API_BASE + path, {
@@ -975,7 +997,7 @@ async function apiDelete(path) {
         renderPoslovnice();
         closeEkranModal();
       } else {
-        const saved = await apiPost("/api/ekrani", payload);
+        const saved = await apiPostWithFallback(["/api/ekrani", "/api/displeji"], payload);
         displeji.push(saved);
         renderEkrani();
         renderPoslovnice();
