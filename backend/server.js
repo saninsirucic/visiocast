@@ -449,6 +449,7 @@ app.get("/api/ekrani/:id", (req, res) => {
 app.post("/api/ekrani", (req, res) => {
   const body = req.body || {};
 
+  
   const naziv = String(body.naziv || body.name || "").trim();
   const poslovnicaId = String(body.poslovnicaId || body.poslovnica || body.branchId || "").trim();
 
