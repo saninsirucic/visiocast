@@ -393,16 +393,11 @@
 
 <!-- JS LOGIKA -->
 <script>
-  // ==== API BASE (LOCAL vs RENDER) ====
-  // Ako hoćeš ručno override (npr. drugi backend), u konzoli upiši:
-  // window.API_BASE = "https://tvoj-backend.onrender.com";
-  const PROD_BACKEND_BASE = "https://visiocast.onrender.com";
-
   window.API_BASE =
-      window.API_BASE ||
-      (location.hostname === "localhost"
-        ? "http://localhost:4000"
-        : PROD_BACKEND_BASE);
+    window.API_BASE ||
+    (location.hostname === "localhost"
+      ? "http://localhost:4000"
+      : "https://visiocast.onrender.com");
   const API_BASE = window.API_BASE;
 
   /* ===============================
@@ -414,15 +409,7 @@
 
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    return fetch(url, { ...options, headers }).then((res) => {
-      // ako token fali / istekao → vrati na login
-      if (res.status === 401 || res.status === 403) {
-        try { localStorage.removeItem("token"); } catch (e) {}
-        // relativno na /admin/
-        window.location.href = "login.html";
-      }
-      return res;
-    });
+    return fetch(url, { ...options, headers });
   }
 
   let komitenti = [];
@@ -502,6 +489,13 @@
   document.getElementById("tab-btn-poslovnice").addEventListener("click", () => switchTab("poslovnice"));
   document.getElementById("tab-btn-ekrani").addEventListener("click", () => switchTab("ekrani"));
 
+  // API
+  async function apiGet(path) {
+    const res = await fetch(API_BASE + path);
+    if (!res.ok) throw new Error("Greška GET " + path + " (" + res.status + ")");
+    return res.json();
+  }
+
 // API
   async function apiGet(path) {
     const res = await apiFetch(API_BASE + path);
@@ -521,28 +515,6 @@
     }
     return res.json();
   }
-
-  // POST sa fallback-om (ako backend nema POST /api/ekrani nego npr. /api/displeji)
-  async function apiPostWithFallback(paths, payload) {
-    let lastErr = null;
-    for (const p of paths) {
-      try {
-        return await apiPost(p, payload);
-      } catch (e) {
-        const msg = String(e || "");
-        lastErr = e;
-        // samo fallback ako je 404 (ruta ne postoji)
-        if (msg.includes(" 404")) {
-          console.warn("POST nije pronađen na", p, "— pokušavam fallback...");
-          continue;
-        }
-        throw e; // ostale greške (401, 400...) ne skrivamo
-      }
-    }
-    throw lastErr || new Error("POST nije uspio ni na jednoj ruti");
-  }
-
-
 
 
 async function apiPut(path, payload) {
@@ -997,7 +969,7 @@ async function apiDelete(path) {
         renderPoslovnice();
         closeEkranModal();
       } else {
-        const saved = await apiPostWithFallback(["/api/ekrani", "/api/displeji"], payload);
+        const saved = await apiPost("/api/ekrani", payload);
         displeji.push(saved);
         renderEkrani();
         renderPoslovnice();
