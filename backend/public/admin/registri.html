@@ -414,7 +414,15 @@
 
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    return fetch(url, { ...options, headers });
+    return fetch(url, { ...options, headers }).then((res) => {
+      // ako token fali / istekao → vrati na login
+      if (res.status === 401 || res.status === 403) {
+        try { localStorage.removeItem("token"); } catch (e) {}
+        // relativno na /admin/
+        window.location.href = "login.html";
+      }
+      return res;
+    });
   }
 
   let komitenti = [];
@@ -493,13 +501,6 @@
   document.getElementById("tab-btn-komitenti").addEventListener("click", () => switchTab("komitenti"));
   document.getElementById("tab-btn-poslovnice").addEventListener("click", () => switchTab("poslovnice"));
   document.getElementById("tab-btn-ekrani").addEventListener("click", () => switchTab("ekrani"));
-
-  // API
-  async function apiGet(path) {
-    const res = await fetch(API_BASE + path);
-    if (!res.ok) throw new Error("Greška GET " + path + " (" + res.status + ")");
-    return res.json();
-  }
 
 // API
   async function apiGet(path) {
