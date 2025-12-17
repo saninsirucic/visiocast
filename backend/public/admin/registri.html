@@ -393,11 +393,16 @@
 
 <!-- JS LOGIKA -->
 <script>
+  // ==== API BASE (LOCAL vs RENDER) ====
+  // Ako hoćeš ručno override (npr. drugi backend), u konzoli upiši:
+  // window.API_BASE = "https://tvoj-backend.onrender.com";
+  const PROD_BACKEND_BASE = "https://visiocast.onrender.com";
+
   window.API_BASE =
-    window.API_BASE ||
-    (location.hostname === "localhost"
-      ? "http://localhost:4000"
-      : "https://visiocast.onrender.com");
+      window.API_BASE ||
+      (location.hostname === "localhost"
+        ? "http://localhost:4000"
+        : PROD_BACKEND_BASE);
   const API_BASE = window.API_BASE;
 
   /* ===============================
