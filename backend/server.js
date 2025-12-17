@@ -443,6 +443,87 @@ app.get("/api/ekrani", (req, res) => {
 
 app.get("/api/ekrani/:id", (req, res) => {
   const item = ekrani.find((e) => e.id === req.params.id);
+
+
+// ✅✅✅ EKRANI: CREATE / UPDATE / DELETE (DEMO ARRAY)
+app.post("/api/ekrani", (req, res) => {
+  const body = req.body || {};
+
+  const naziv = String(body.naziv || body.name || "").trim();
+  const poslovnicaId = String(body.poslovnicaId || body.poslovnica || body.branchId || "").trim();
+
+  if (!poslovnicaId) return res.status(400).json({ message: "Poslovnica je obavezna" });
+  if (!naziv) return res.status(400).json({ message: "Naziv ekrana je obavezan" });
+
+  const id = body.id || `scr-${Date.now()}`;
+
+  // frontend često šalje lokacijaTip; mi to mapiramo na tip i lokacijaOpis
+  const tip = String(body.lokacijaTip || body.tip || "").trim();
+  const lokacijaOpis = String(body.lokacijaOpis || body.lokacija || tip || "").trim();
+
+  const newItem = {
+    id,
+    naziv,
+    poslovnicaId,
+    lokacijaOpis,
+    status: String(body.status || "offline").trim() || "offline",
+    aktivnaReklamaId: body.aktivnaReklamaId || null,
+    tip: tip || "",
+    napomena: String(body.napomena || "").trim(),
+  };
+
+  ekrani.unshift(newItem);
+  res.status(201).json(newItem);
+});
+
+app.put("/api/ekrani/:id", (req, res) => {
+  const idx = ekrani.findIndex((e) => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: "Ekran nije pronađen" });
+
+  const body = req.body || {};
+
+  // zadrži postojeće, ali dozvoli update polja iz frontenda
+  const current = ekrani[idx];
+
+  const naziv = body.naziv !== undefined ? String(body.naziv || "").trim() : current.naziv;
+  const poslovnicaId = body.poslovnicaId !== undefined ? String(body.poslovnicaId || "").trim() : current.poslovnicaId;
+
+  // mapiranje lokacijaTip/tip + lokacijaOpis
+  const tip = body.lokacijaTip !== undefined || body.tip !== undefined
+    ? String(body.lokacijaTip || body.tip || "").trim()
+    : (current.tip || "");
+
+  const lokacijaOpis = body.lokacijaOpis !== undefined || body.lokacija !== undefined || body.lokacijaTip !== undefined || body.tip !== undefined
+    ? String(body.lokacijaOpis || body.lokacija || tip || "").trim()
+    : (current.lokacijaOpis || "");
+
+  ekrani[idx] = {
+    ...current,
+    ...(body || {}),
+    naziv,
+    poslovnicaId,
+    tip,
+    lokacijaOpis,
+    napomena: body.napomena !== undefined ? String(body.napomena || "").trim() : (current.napomena || ""),
+    status: body.status !== undefined ? String(body.status || "").trim() : (current.status || "offline"),
+  };
+
+  res.json(ekrani[idx]);
+});
+
+app.delete("/api/ekrani/:id", (req, res) => {
+  const id = req.params.id;
+  const before = ekrani.length;
+
+  ekrani = ekrani.filter((e) => e.id !== id);
+
+  if (ekrani.length === before) {
+    return res.status(404).json({ message: "Ekran nije pronađen" });
+  }
+
+  // ako neka poslovnica ima aktivnu reklamu vezanu za ovaj ekran, ovdje ništa ne diramo (demo)
+  res.json({ success: true });
+});
   if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
   res.json(item);
 });
