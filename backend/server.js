@@ -444,88 +444,7 @@ app.get("/api/ekrani", (req, res) => {
 app.get("/api/ekrani/:id", (req, res) => {
   const item = ekrani.find((e) => e.id === req.params.id);
 
-
-// ✅✅✅ EKRANI: CREATE / UPDATE / DELETE (DEMO ARRAY)
-app.post("/api/ekrani", (req, res) => {
-  const body = req.body || {};
-
-  
-  const naziv = String(body.naziv || body.name || "").trim();
-  const poslovnicaId = String(body.poslovnicaId || body.poslovnica || body.branchId || "").trim();
-
-  if (!poslovnicaId) return res.status(400).json({ message: "Poslovnica je obavezna" });
-  if (!naziv) return res.status(400).json({ message: "Naziv ekrana je obavezan" });
-
-  const id = body.id || `scr-${Date.now()}`;
-
-  // frontend često šalje lokacijaTip; mi to mapiramo na tip i lokacijaOpis
-  const tip = String(body.lokacijaTip || body.tip || "").trim();
-  const lokacijaOpis = String(body.lokacijaOpis || body.lokacija || tip || "").trim();
-
-  const newItem = {
-    id,
-    naziv,
-    poslovnicaId,
-    lokacijaOpis,
-    status: String(body.status || "offline").trim() || "offline",
-    aktivnaReklamaId: body.aktivnaReklamaId || null,
-    tip: tip || "",
-    napomena: String(body.napomena || "").trim(),
-  };
-
-  ekrani.unshift(newItem);
-  res.status(201).json(newItem);
-});
-
-app.put("/api/ekrani/:id", (req, res) => {
-  const idx = ekrani.findIndex((e) => e.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: "Ekran nije pronađen" });
-
-  const body = req.body || {};
-
-  // zadrži postojeće, ali dozvoli update polja iz frontenda
-  const current = ekrani[idx];
-
-  const naziv = body.naziv !== undefined ? String(body.naziv || "").trim() : current.naziv;
-  const poslovnicaId = body.poslovnicaId !== undefined ? String(body.poslovnicaId || "").trim() : current.poslovnicaId;
-
-  // mapiranje lokacijaTip/tip + lokacijaOpis
-  const tip = body.lokacijaTip !== undefined || body.tip !== undefined
-    ? String(body.lokacijaTip || body.tip || "").trim()
-    : (current.tip || "");
-
-  const lokacijaOpis = body.lokacijaOpis !== undefined || body.lokacija !== undefined || body.lokacijaTip !== undefined || body.tip !== undefined
-    ? String(body.lokacijaOpis || body.lokacija || tip || "").trim()
-    : (current.lokacijaOpis || "");
-
-  ekrani[idx] = {
-    ...current,
-    ...(body || {}),
-    naziv,
-    poslovnicaId,
-    tip,
-    lokacijaOpis,
-    napomena: body.napomena !== undefined ? String(body.napomena || "").trim() : (current.napomena || ""),
-    status: body.status !== undefined ? String(body.status || "").trim() : (current.status || "offline"),
-  };
-
-  res.json(ekrani[idx]);
-});
-
-app.delete("/api/ekrani/:id", (req, res) => {
-  const id = req.params.id;
-  const before = ekrani.length;
-
-  ekrani = ekrani.filter((e) => e.id !== id);
-
-  if (ekrani.length === before) {
-    return res.status(404).json({ message: "Ekran nije pronađen" });
-  }
-
-  // ako neka poslovnica ima aktivnu reklamu vezanu za ovaj ekran, ovdje ništa ne diramo (demo)
-  res.json({ success: true });
-});
-  if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
+if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
   res.json(item);
 });
 
@@ -606,6 +525,54 @@ app.put("/api/reklame/:id", (req, res) => {
   } catch (e) {
     res.status(500).json({ message: "Greška pri izmjeni reklame." });
   }
+});
+
+// EKRANI — CREATE / UPDATE / DELETE
+app.post("/api/ekrani", auth, (req, res) => {
+  const { naziv, poslovnicaId, lokacijaTip, napomena } = req.body || {};
+  if (!naziv || !poslovnicaId) {
+    return res.status(400).json({ message: "Fali naziv ili poslovnicaId" });
+  }
+
+  const novi = {
+    id: "ek-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    naziv: String(naziv).trim(),
+    poslovnicaId: String(poslovnicaId).trim(),
+    lokacijaTip: lokacijaTip ? String(lokacijaTip).trim() : "",
+    napomena: napomena ? String(napomena).trim() : "",
+    status: "offline",
+    aktivnaReklamaId: null,
+  };
+
+  ekrani.push(novi);
+  saveData();
+  res.json({ ok: true, ekran: novi });
+});
+
+app.put("/api/ekrani/:id", auth, (req, res) => {
+  const item = ekrani.find((e) => e.id === req.params.id);
+  if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
+
+  const { naziv, poslovnicaId, lokacijaTip, napomena, status, aktivnaReklamaId } = req.body || {};
+
+  if (naziv !== undefined) item.naziv = String(naziv).trim();
+  if (poslovnicaId !== undefined) item.poslovnicaId = String(poslovnicaId).trim();
+  if (lokacijaTip !== undefined) item.lokacijaTip = String(lokacijaTip).trim();
+  if (napomena !== undefined) item.napomena = String(napomena).trim();
+  if (status !== undefined) item.status = String(status).trim();
+  if (aktivnaReklamaId !== undefined) item.aktivnaReklamaId = aktivnaReklamaId;
+
+  saveData();
+  res.json({ ok: true, ekran: item });
+});
+
+app.delete("/api/ekrani/:id", auth, (req, res) => {
+  const idx = ekrani.findIndex((e) => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: "Ekran nije pronađen" });
+
+  const removed = ekrani.splice(idx, 1)[0];
+  saveData();
+  res.json({ ok: true, removed });
 });
 
 // ✅✅✅ AKCIJE ZA DUGMAD (tvoj HTML ovo zove)
