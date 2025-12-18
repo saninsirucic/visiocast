@@ -7,6 +7,8 @@
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="auth-guard.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-900">
   <div class="min-h-screen flex">
@@ -240,7 +242,7 @@
     // API FETCH – automatski dodaje token (FIX)
     // ===============================
     function apiFetch(url, options = {}) {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const headers = { ...(options.headers || {}) };
 
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -252,7 +254,7 @@
     // JWT helper (ako backend traži Bearer token)
     function getToken() {
       return (
-        localStorage.getItem("token") ||
+        sessionStorage.getItem("token") ||
         localStorage.getItem("jwt") ||
         localStorage.getItem("accessToken") ||
         localStorage.getItem("visiocast_token") ||

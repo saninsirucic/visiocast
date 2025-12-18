@@ -37,7 +37,7 @@
       </button>
 
       <p class="text-xs text-slate-500 text-center">
-        Ako već imaš token, prebacit će te direktno u admin.
+        Token se pamti samo dok je browser otvoren (radi sigurnosti).
       </p>
     </form>
   </div>
@@ -53,6 +53,9 @@
         : location.origin);
 
     const API_BASE = window.API_BASE;
+
+    // Očisti stare tokene (ako su ranije bili u localStorage)
+    try { localStorage.removeItem("token"); } catch (e) {}
 
     const msg = document.getElementById("msg");
     const form = document.getElementById("loginForm");
@@ -72,11 +75,8 @@
       }
     }
 
-    // Ako token postoji, pokušaj odmah ući u admin
-    const existing = localStorage.getItem("token");
-    if (existing) {
-      window.location.href = "/admin/index.html";
-    }
+    // Ne radimo auto-login: uvijek tražimo prijavu.
+    // (Token se čuva u sessionStorage i nestaje kad zatvoriš browser.)
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -104,7 +104,7 @@
           return;
         }
 
-        localStorage.setItem("token", data.token);
+        sessionStorage.setItem("token", data.token);
         showMsg("Uspješna prijava. Prebacujem te u admin...", "ok");
 
         setTimeout(() => {

@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="auth-guard.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-900">
 <div class="min-h-screen flex">
@@ -404,7 +406,7 @@
      API FETCH – automatski dodaje token
      =============================== */
   function apiFetch(url, options = {}) {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const headers = { ...(options.headers || {}) };
 
     if (token) headers.Authorization = `Bearer ${token}`;

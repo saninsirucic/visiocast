@@ -1,5 +1,7 @@
 // server.js
 const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 
 // ✅ .env učitavaš SAMO lokalno (Render koristi Environment Variables)
 if (process.env.NODE_ENV !== "production") {
@@ -40,6 +42,33 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+
+
+// =========================
+// UPLOAD u /public/media (lokalno)
+// =========================
+const mediaDir = path.join(__dirname, "public", "media");
+if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, mediaDir),
+  filename: (req, file, cb) => {
+    const safeBase = (path.parse(file.originalname).name || "upload")
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    const ext = (path.extname(file.originalname) || "").toLowerCase();
+    const stamp = Date.now();
+    cb(null, `${safeBase || "upload"}-${stamp}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 300 * 1024 * 1024 }, // 300MB
+});
+
 // ------------------------
 // AUTH ROUTES (OTVORENO)
 // ------------------------
@@ -49,6 +78,19 @@ app.use("/api/auth", authRoutes);
 // ✅ LOGIN (OTVORENO) - vraća JWT token za admin panel
 // POST /api/auth/login  { username, password }
 // ------------------------
+
+// Upload endpoint (vrati URL koji se može spremiti u reklamu)
+app.post("/api/upload", auth, upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ ok: false, error: "Nema fajla" });
+    const url = `/media/${req.file.filename}`;
+    return res.json({ ok: true, url, filename: req.file.filename });
+  } catch (e) {
+    console.error("UPLOAD ERROR:", e);
+    return res.status(500).json({ ok: false, error: "Upload failed" });
+  }
+});
+
 app.post("/api/auth/login", (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -117,20 +159,6 @@ function normalizeMediaUrl(fajlUrl) {
 
   // ako dođe "sanin-test.mp4" -> "/media/sanin-test.mp4"
   return "/media/" + str.replace(/^\/+/, "");
-}
-
-// ✅ SAVE (MVP): trenutno držimo podatke u memoriji.
-// Neke verzije frontenda/servera zovu saveData(), pa ovo sprječava 500 greške.
-// Kad kasnije pređeš na DB (Mongo), ovo možeš izbaciti ili zamijeniti pravim upisom.
-function saveData() {
-  // no-op
-}
-
-// Normalizuj shape ekrana da frontend uvijek dobije očekivana polja
-function normalizeEkranShape(e) {
-  const lokacijaTip = (e.lokacijaTip ?? e.tip ?? "").toString();
-  const napomena = (e.napomena ?? "").toString();
-  return { ...e, lokacijaTip, tip: (e.tip ?? lokacijaTip).toString(), napomena };
 }
 
 // ------------------------
@@ -450,15 +478,18 @@ app.delete("/api/poslovnice/:id", (req, res) => {
 app.get("/api/ekrani", (req, res) => {
   const { poslovnicaId } = req.query;
   if (poslovnicaId) {
-    return res.json(ekrani.filter((e) => e.poslovnicaId === poslovnicaId).map(normalizeEkranShape));
+    return res.json(ekrani.filter((e) => e.poslovnicaId === poslovnicaId));
   }
-  res.json(ekrani.map(normalizeEkranShape));
+  res.json(ekrani);
 });
+
 app.get("/api/ekrani/:id", (req, res) => {
   const item = ekrani.find((e) => e.id === req.params.id);
-  if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
-  res.json(normalizeEkranShape(item));
+
+if (!item) return res.status(404).json({ message: "Ekran nije pronađen" });
+  res.json(item);
 });
+
 // ------------------------
 // API – REKLAME (DEMO ARRAY)
 // ------------------------
@@ -568,16 +599,13 @@ app.put("/api/ekrani/:id", auth, (req, res) => {
 
   if (naziv !== undefined) item.naziv = String(naziv).trim();
   if (poslovnicaId !== undefined) item.poslovnicaId = String(poslovnicaId).trim();
-  if (lokacijaTip !== undefined) {
-    item.lokacijaTip = String(lokacijaTip).trim();
-    item.tip = item.lokacijaTip; // kompatibilnost sa starim poljem
-  }
+  if (lokacijaTip !== undefined) item.lokacijaTip = String(lokacijaTip).trim();
   if (napomena !== undefined) item.napomena = String(napomena).trim();
   if (status !== undefined) item.status = String(status).trim();
   if (aktivnaReklamaId !== undefined) item.aktivnaReklamaId = aktivnaReklamaId;
 
   saveData();
-  res.json({ ok: true, ekran: normalizeEkranShape(item) });
+  res.json({ ok: true, ekran: item });
 });
 
 app.delete("/api/ekrani/:id", auth, (req, res) => {
@@ -678,3 +706,12 @@ app.get("/api/player", (req, res) => {
     process.exit(1);
   }
 })();
+
+
+/* ===============================
+   SAFE NO-OP SAVE (NE DIRATI LOGIKU)
+   =============================== */
+function saveData() {
+  // trenutno demo array – nema perzistencije
+  // ostavljeno NAMJERNO prazno
+}
