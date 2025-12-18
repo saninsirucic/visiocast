@@ -3,10 +3,10 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 
-// ✅ .env učitavaš SAMO lokalno (Render koristi Environment Variables)
-if (process.env.NODE_ENV !== "production") {
+// ✅ .env učitavanje (sigurno i lokalno i na serveru)
+try {
   require("dotenv").config();
-}
+} catch (e) {}
 
 const express = require("express");
 const cors = require("cors");
@@ -47,7 +47,7 @@ app.use(express.json());
 // =========================
 // UPLOAD u /public/media (lokalno)
 // =========================
-const mediaDir = path.join(__dirname, "public", "media");
+const mediaDir = "/var/lib/visiocast/uploads";
 if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -145,7 +145,7 @@ app.use(adminOnly);
 // ------------------------
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", express.static(path.join(__dirname, "public", "admin")));
-app.use("/media", express.static(path.join(__dirname, "public", "media")));
+app.use("/media", express.static("/var/lib/visiocast/uploads"));
 
 // --------------------------------------------------
 // POMOĆNA FUNKCIJA: normalizacija URL-a za fajl
@@ -686,6 +686,14 @@ app.get("/api/player", (req, res) => {
     .map((r) => ({ ...r, fajlUrl: normalizeMediaUrl(r.fajlUrl) }));
 
   res.json({ ok: true, poslovnicaId: poslovnicaId || null, reklame: lista });
+});
+
+
+// ------------------------
+// ROOT → ADMIN LOGIN REDIRECT
+// ------------------------
+app.get("/", (req, res) => {
+  return res.redirect("/admin/login.html");
 });
 
 // ------------------------
